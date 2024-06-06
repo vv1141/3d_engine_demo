@@ -3,31 +3,30 @@
 
 #define MAX_FACE_VERTICES 32
 
-#include <vector>
-#include <map>
 #include <glm/glm.hpp>
+#include <map>
+#include <vector>
 #define GLM_ENABLE_EXPERIMENTAL
+#include <algorithm>
+#include <cmath>
+#include <float.h>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <float.h>
-#include <cmath>
-#include <algorithm>
 #include <string.h>
 
 #include "Utility.h"
 
 class Collision {
 public:
-
   static const float epsilon;
 
   struct Face;
 
   struct HalfEdge {
     glm::vec3* startVertex;
-    HalfEdge* next;
-    HalfEdge* twin;
-    Face* face;
+    HalfEdge*  next;
+    HalfEdge*  twin;
+    Face*      face;
   };
 
   struct Face {
@@ -37,34 +36,39 @@ public:
 
   struct Polyhedron {
     std::vector<glm::vec3> vertices;
-    std::vector<HalfEdge> edges;
-    std::vector<Face> faces;
-    glm::vec3 centroid;
-    glm::vec3 maxHalfWidth;
+    std::vector<HalfEdge>  edges;
+    std::vector<Face>      faces;
+    glm::vec3              centroid;
+    glm::vec3              maxHalfWidth;
   };
 
   struct ContactPoint {
-    float separation;
+    float     separation;
     glm::vec3 position;
   };
 
   struct ContactManifold {
-    glm::vec3 normal;
+    glm::vec3                 normal;
     std::vector<ContactPoint> points;
   };
 
   enum class IsStatic {
-    null, A, B
+    null,
+    A,
+    B
   };
 
 private:
-
   struct TemporalCoherenceState {
-    enum Status { null, separated, overlapping };
-    enum SeparatingAxisType { face, edge };
-    enum OverlappingFeaturesType { faceFace, edgeEdge };
+    enum Status { null,
+                  separated,
+                  overlapping };
+    enum SeparatingAxisType { face,
+                              edge };
+    enum OverlappingFeaturesType { faceFace,
+                                   edgeEdge };
     struct SeparatingFaceAxis {
-      Face* face;
+      Face*       face;
       Polyhedron* otherPolyhedron;
     };
     struct SeparatingEdgeAxis {
@@ -79,13 +83,13 @@ private:
       HalfEdge* edgeA;
       HalfEdge* edgeB;
     };
-    Status status;
-    SeparatingAxisType separatingAxisType;
-    SeparatingFaceAxis separatingFaceAxis;
-    SeparatingEdgeAxis separatingEdgeAxis;
+    Status                  status;
+    SeparatingAxisType      separatingAxisType;
+    SeparatingFaceAxis      separatingFaceAxis;
+    SeparatingEdgeAxis      separatingEdgeAxis;
     OverlappingFeaturesType overlappingFeaturesType;
-    OverlappingFaces overlappingFaces;
-    OverlappingEdges overlappingEdges;
+    OverlappingFaces        overlappingFaces;
+    OverlappingEdges        overlappingEdges;
   };
 
   static std::map<Polyhedron*, std::map<Polyhedron*, TemporalCoherenceState>> temporalCoherenceStateMap;
@@ -108,9 +112,9 @@ private:
 
   struct EdgeDirectionQuery {
     glm::vec3 separationDirection; // unit vector to the direction in which polyhedron B has to be pushed to resolve overlap
-    float separation;              // separation is negative if there is overlap
-    HalfEdge* edgeA;               // edge on Polyhedron A that can be used (with edge on polyhedron B) to find the contact point
-    HalfEdge* edgeB;               // edge on Polyhedron B that can be used (with edge on polyhedron A) to find the contact point
+    float     separation; // separation is negative if there is overlap
+    HalfEdge* edgeA; // edge on Polyhedron A that can be used (with edge on polyhedron B) to find the contact point
+    HalfEdge* edgeB; // edge on Polyhedron B that can be used (with edge on polyhedron A) to find the contact point
   };
 
   static EdgeDirectionQuery getEdgeDirectionOverlap(Polyhedron* A, Polyhedron* B);
@@ -119,7 +123,7 @@ private:
 
   struct EdgeSeparationDistanceQuery {
     glm::vec3 separationDirection;
-    float separation;
+    float     separation;
   };
 
   static EdgeSeparationDistanceQuery getEdgeSeparationDistance(HalfEdge* edgeA, HalfEdge* edgeB, glm::vec3 centroidA);
@@ -137,17 +141,16 @@ private:
   static glm::vec3                   getNearestPointBetweenLines(glm::vec3 startA, glm::vec3 endA, glm::vec3 startB, glm::vec3 endB);
 
   struct PointToLineSegmentDistanceQuery {
-    float distance;
+    float     distance;
     glm::vec3 nearestPointOnLineSegment;
     glm::vec3 normal;
-    bool pointOverlapsLineSegment;
+    bool      pointOverlapsLineSegment;
   };
 
   static PointToLineSegmentDistanceQuery pointToLineSegmentDistance(glm::vec3 point, glm::vec3 p1, glm::vec3 p2);
   static void                            reduceContactPoints(ContactPoint* reducedContactPoints, ContactPoint* contactPoints, int contactPointsSize, glm::vec3* faceNormal);
 
 public:
-
   static glm::vec3       linePlaneIntersection(glm::vec3 lineStartPoint, glm::vec3 lineEndPoint, glm::vec3 planeNormal, glm::vec3 planeVertex);
   static bool            joinContactManifoldNormals(std::vector<ContactManifold>* contactManifolds, glm::vec3* joinedNormal);
   static bool            joinContactManifolds(std::vector<ContactManifold>* contactManifolds, ContactManifold* reducedManifold);
@@ -162,7 +165,6 @@ public:
   static void            copyPolyhedron(Polyhedron* source, Polyhedron* target);
   static void            transformPolyhedron(Polyhedron* p, Polyhedron* pResult, glm::mat4 m);
   static glm::vec3       getSupportPointCoordinate(Polyhedron* polyhedron, glm::vec3 direction);
-
 };
 
 #endif

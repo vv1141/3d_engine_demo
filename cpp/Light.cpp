@@ -5,14 +5,14 @@ float Light::lightVectorsCameraSpace[] = {0};
 float Light::lightComponents[] = {0};
 
 void Light::setupLights(std::vector<DirectionalLight> directionalLights,
-                        std::vector<PointLight> pointLights,
-                        glm::mat4 view,
-                        GLuint lightCountId,
-                        GLuint lightVectorsWorldSpaceId,
-                        GLuint lightVectorsCameraSpaceId,
-                        GLuint lightComponentsId){
+                        std::vector<PointLight>       pointLights,
+                        glm::mat4                     view,
+                        GLuint                        lightCountId,
+                        GLuint                        lightVectorsWorldSpaceId,
+                        GLuint                        lightVectorsCameraSpaceId,
+                        GLuint                        lightComponentsId) {
   int totalLights = 0;
-  for(int i = 0; i < directionalLights.size(); i++){
+  for(int i = 0; i < directionalLights.size(); i++) {
     directionalLights[i].direction = glm::normalize(directionalLights[i].direction);
     lightVectorsWorldSpace[totalLights * 4 + 0] = directionalLights[i].direction.x;
     lightVectorsWorldSpace[totalLights * 4 + 1] = directionalLights[i].direction.y;
@@ -29,7 +29,7 @@ void Light::setupLights(std::vector<DirectionalLight> directionalLights,
     lightComponents[totalLights * 3 + 2] = lightComponent.z;
     totalLights++;
   }
-  for(int i = 0; i < pointLights.size(); i++){
+  for(int i = 0; i < pointLights.size(); i++) {
     lightVectorsWorldSpace[totalLights * 4 + 0] = pointLights[i].position.x;
     lightVectorsWorldSpace[totalLights * 4 + 1] = pointLights[i].position.y;
     lightVectorsWorldSpace[totalLights * 4 + 2] = pointLights[i].position.z;

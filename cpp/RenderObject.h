@@ -1,16 +1,15 @@
 #ifndef RENDER_OBJECT_H
 #define RENDER_OBJECT_H
 
-#include <list>
 #include <algorithm>
+#include <list>
 
 #include "Model.h"
-#include "Texture.h"
 #include "Object.h"
+#include "Texture.h"
 
 class RenderObject {
 public:
-
   // a collection of RenderObjects is orderable by model and texture for efficient rendering by avoiding unnecessary binding of model and texture
 
   struct ModelTexturePair {
@@ -19,12 +18,10 @@ public:
   };
 
 private:
-
   ModelTexturePair* getModelTexturePair(std::list<ModelTexturePair>* modelTexturePairs, Model* model, Texture* texture);
-  int getSortIdentifier() const;
+  int               getSortIdentifier() const;
 
 public:
-
   ModelTexturePair* modelTexturePair;
   Object*           object;
 
@@ -32,7 +29,6 @@ public:
   ~RenderObject();
 
   static void sortRenderObjects(std::vector<RenderObject>* renderObjects);
-
 };
 
 #endif

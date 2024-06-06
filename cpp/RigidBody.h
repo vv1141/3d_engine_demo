@@ -3,39 +3,40 @@
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/norm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/norm.hpp>
 #include <memory>
 
-#include "Object.h"
 #include "Collision.h"
 #include "Geometry.h"
+#include "Object.h"
 
 class CollisionPair;
 
 class RigidBody {
 public:
-
   enum class Identifier {
-    null, hull, tyre, ground
+    null,
+    hull,
+    tyre,
+    ground
   };
 
 private:
-
-  static const float                      epsilon;
-  static const float                      clampingCoefficient;
-  static const float                      muStatic;
-  static const float                      muDynamic;
-  static const float                      muStaticSpin;
-  static const float                      muDynamicSpin;
+  static const float epsilon;
+  static const float clampingCoefficient;
+  static const float muStatic;
+  static const float muDynamic;
+  static const float muStaticSpin;
+  static const float muDynamicSpin;
 
   struct SupportManifold {
     glm::vec3 normal;
-    bool isStable;
+    bool      isStable;
   };
 
-  float                                   mass;
-  float                                   inverseMass;
+  float mass;
+  float inverseMass;
 
   glm::mat3                               inertiaTensor;
   glm::mat3                               inertiaTensorWorld;
@@ -47,13 +48,13 @@ private:
   SupportManifold                         supportManifold;
   bool                                    inRest;
 
-  bool                                    tyreGroundCollision;
-  float                                   collisionImpulseMagnitude;
-  glm::vec3                               relativeTyreGroundPointVelocity;
+  bool      tyreGroundCollision;
+  float     collisionImpulseMagnitude;
+  glm::vec3 relativeTyreGroundPointVelocity;
 
-  Object                                  object;
-  glm::vec3                               momentum;
-  glm::vec3                               angularMomentum;
+  Object    object;
+  glm::vec3 momentum;
+  glm::vec3 angularMomentum;
 
   void recalculateLinear();
   void recalculateAngular();
@@ -69,12 +70,11 @@ private:
     float energyDifference;
   };
 
-  float                                getVelocityDecay(glm::vec3 variable, float upperSpeed, float lowerSpeed, float minDecayFactor, float maxDecayFactor);
-  bool                                 isStableContactManifold(Collision::ContactManifold* contactManifold, glm::vec3 gravityVector);
-  bool                                 isStationaryOnSlope(glm::vec3 gravity, glm::vec3 normal);
+  float getVelocityDecay(glm::vec3 variable, float upperSpeed, float lowerSpeed, float minDecayFactor, float maxDecayFactor);
+  bool  isStableContactManifold(Collision::ContactManifold* contactManifold, glm::vec3 gravityVector);
+  bool  isStationaryOnSlope(glm::vec3 gravity, glm::vec3 normal);
 
 public:
-
   RigidBody();
   ~RigidBody();
 
@@ -99,38 +99,38 @@ public:
   SupportManifold*                         getSupportManifold();
   bool                                     isInRest();
 
-  void                           setPosition(glm::vec3 position);
-  glm::vec3                      getPosition();
-  glm::vec3                      getPosition(RigidBody* other);
-  void                           setVelocity(glm::vec3 velocity);
-  glm::vec3                      getVelocity();
-  glm::vec3                      getPointVelocity(glm::vec3 point);
-  void                           setOrientation(glm::quat orientation);
-  void                           setOrientationFromDirection(glm::vec3 direction);
-  void                           setOrientationFromDirection(glm::vec3 direction, glm::vec3 up);
-  void                           rotate(glm::vec3 magnitude);
-  void                           rotateGlobal(glm::vec3 magnitude);
-  glm::quat                      getOrientation();
-  void                           setAngularVelocity(glm::vec3 angularVelocity);
-  glm::vec3                      getAngularVelocity();
-  glm::vec3                      getAngularMomentum();
+  void      setPosition(glm::vec3 position);
+  glm::vec3 getPosition();
+  glm::vec3 getPosition(RigidBody* other);
+  void      setVelocity(glm::vec3 velocity);
+  glm::vec3 getVelocity();
+  glm::vec3 getPointVelocity(glm::vec3 point);
+  void      setOrientation(glm::quat orientation);
+  void      setOrientationFromDirection(glm::vec3 direction);
+  void      setOrientationFromDirection(glm::vec3 direction, glm::vec3 up);
+  void      rotate(glm::vec3 magnitude);
+  void      rotateGlobal(glm::vec3 magnitude);
+  glm::quat getOrientation();
+  void      setAngularVelocity(glm::vec3 angularVelocity);
+  glm::vec3 getAngularVelocity();
+  glm::vec3 getAngularMomentum();
 
-  glm::mat4                      getModelMatrix();
-  glm::mat4                      getModelMatrixInverse();
-  glm::mat3                      getRotationMatrix();
-  Object*                        getObject();
+  glm::mat4 getModelMatrix();
+  glm::mat4 getModelMatrixInverse();
+  glm::mat3 getRotationMatrix();
+  Object*   getObject();
 
-  void                           setFrameVariables();
-  bool                           getTyreGroundCollision();
-  float                          getCollisionImpulseMagnitude();
-  glm::vec3                      getRelativeTyreGroundPointVelocity();
+  void      setFrameVariables();
+  bool      getTyreGroundCollision();
+  float     getCollisionImpulseMagnitude();
+  glm::vec3 getRelativeTyreGroundPointVelocity();
 
-  void                           applyImpulse(glm::vec3 impulse, glm::vec3 point);
-  void                           applyGravity(glm::vec3 g, float dt);
-  void                           applyAngularImpulse(glm::vec3 impulse);
-  static void                    applyCollisionResponse(RigidBody* a, RigidBody* b, Collision::ContactManifold contactManifold);
-  void                           applyRestDetection();
-  void                           integrate(float dt);
+  void        applyImpulse(glm::vec3 impulse, glm::vec3 point);
+  void        applyGravity(glm::vec3 g, float dt);
+  void        applyAngularImpulse(glm::vec3 impulse);
+  static void applyCollisionResponse(RigidBody* a, RigidBody* b, Collision::ContactManifold contactManifold);
+  void        applyRestDetection();
+  void        integrate(float dt);
 };
 
 #endif

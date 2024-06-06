@@ -5,7 +5,6 @@
 
 class Keybind {
 public:
-
   enum class MouseWheelDelta {
     forward,
     backward
@@ -44,7 +43,6 @@ public:
   };
 
 private:
-
   enum class Type {
     unbound,
     keyboard,
@@ -63,18 +61,17 @@ private:
   ControllerButtonDs4 controllerButtonBindDs4;
   ControllerAxisDs4   controllerAxisBindDs4;
 
-  std::string         getKeyboardKeyName(const sf::Keyboard::Key key);
-  std::string         getMouseButtonName(const sf::Mouse::Button button);
-  std::string         getControllerButtonNameDs4(ControllerButtonDs4 button);
-  std::string         getControllerAxisNameDs4(ControllerAxisDs4 axis);
+  std::string getKeyboardKeyName(const sf::Keyboard::Key key);
+  std::string getMouseButtonName(const sf::Mouse::Button button);
+  std::string getControllerButtonNameDs4(ControllerButtonDs4 button);
+  std::string getControllerAxisNameDs4(ControllerAxisDs4 axis);
 
-  bool                previouslyDown;
-  bool                recordedHit;
-  int                 frameTag;
-  int*                updatedFrameTag;
+  bool previouslyDown;
+  bool recordedHit;
+  int  frameTag;
+  int* updatedFrameTag;
 
 public:
-
   Keybind();
   Keybind(sf::Keyboard::Key keyboardBind);
   Keybind(sf::Mouse::Button mouseButtonBind);
@@ -96,7 +93,6 @@ public:
   bool        hit();
   bool        hit(unsigned int joystickNumber);
   float       axisValue(unsigned int joystickNumber);
-
 };
 
 #endif

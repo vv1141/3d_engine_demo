@@ -1,6 +1,6 @@
 #include "Player.h"
 
-Player::Player(){
+Player::Player() {
   keybindProfiles.kbm = nullptr;
   keybindProfiles.controller = nullptr;
   joystick = nullptr;
@@ -8,39 +8,39 @@ Player::Player(){
   followedObject = nullptr;
 }
 
-Player::~Player(){
+Player::~Player() {
 }
 
-void Player::setKeybindProfiles(Input::PlayerKeybindProfiles keybindProfiles){
+void Player::setKeybindProfiles(Input::PlayerKeybindProfiles keybindProfiles) {
   this->keybindProfiles = keybindProfiles;
 }
 
-Input::PlayerKeybindProfiles* Player::getKeybindProfiles(){
+Input::PlayerKeybindProfiles* Player::getKeybindProfiles() {
   return &keybindProfiles;
 }
 
-void Player::setJoystick(Input::Joystick* joystick){
+void Player::setJoystick(Input::Joystick* joystick) {
   this->joystick = joystick;
 }
 
-void Player::setControlledVehicle(Vehicle* vehicle){
+void Player::setControlledVehicle(Vehicle* vehicle) {
   controlledVehicle = vehicle;
 }
 
-Vehicle* Player::getControlledVehicle(){
+Vehicle* Player::getControlledVehicle() {
   return controlledVehicle;
 }
 
-void Player::setFollowedObject(Object* object){
+void Player::setFollowedObject(Object* object) {
   followedObject = object;
 }
 
-Object* Player::getFollowedObject(){
+Object* Player::getFollowedObject() {
   return followedObject;
 }
 
-void Player::processLocalInput(Input* input){
-  if(controlledVehicle != nullptr){
+void Player::processLocalInput(Input* input) {
+  if(controlledVehicle != nullptr) {
     controlledVehicle->processLocalInput(input, &keybindProfiles, joystick);
   }
 }
