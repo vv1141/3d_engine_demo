@@ -6,9 +6,7 @@
 
 class VehicleType {
 private:
-
 public:
-
   static const float hullMass;
   static const float hullRotationalInertia;
   static const float rotationalInertia;
@@ -18,24 +16,24 @@ public:
   static const float springConstant;
   static const float springDampingCoefficient;
 
-  float hullLength;
-  float hullHeight;
-  float hullWidth;
-  float hitboxHorizontalOffset;
-  float hitboxVerticalOffset;
-  float tyreRadius;
-  float tyreWidth;
-  float frontAxleHorizontalOffset;
-  float rearAxleHorizontalOffset;
-  float frontAxleVerticalOffset;
-  float rearAxleVerticalOffset;
-  float frontAxleWidth;
-  float rearAxleWidth;
+  float                 hullLength;
+  float                 hullHeight;
+  float                 hullWidth;
+  float                 hitboxHorizontalOffset;
+  float                 hitboxVerticalOffset;
+  float                 tyreRadius;
+  float                 tyreWidth;
+  float                 frontAxleHorizontalOffset;
+  float                 rearAxleHorizontalOffset;
+  float                 frontAxleVerticalOffset;
+  float                 rearAxleVerticalOffset;
+  float                 frontAxleWidth;
+  float                 rearAxleWidth;
   Collision::Polyhedron hullHitbox;
 
   glm::mat3 hullRotationalInertiaTensor;
   glm::mat3 tyreRotationalInertiaTensor;
-  float tyreRotationalInertiaAroundAxle;
+  float     tyreRotationalInertiaAroundAxle;
 
   VehicleType();
   ~VehicleType();
@@ -53,8 +51,7 @@ public:
     float frontAxleVerticalOffset,
     float rearAxleVerticalOffset,
     float frontAxleWidth,
-    float rearAxleWidth
-  );
+    float rearAxleWidth);
 };
 
 #endif

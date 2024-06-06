@@ -4,16 +4,17 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/rotate_vector.hpp>
 
-#include "Vehicle.h"
+#include "Debug.h"
 #include "Input.h"
 #include "Utility.h"
-#include "Debug.h"
+#include "Vehicle.h"
 
 class Camera {
 private:
-
   enum class State {
-    vehicleFollow, vehicleFixed, orbit
+    vehicleFollow,
+    vehicleFixed,
+    orbit
   };
 
   State     state;
@@ -24,23 +25,22 @@ private:
   Input::Joystick*              joystick;
   float*                        fov;
 
-  Vehicle*  vehicle;
-  float     vehicleCameraDistance;
-  float     vehicleCameraHeight;
-  float     vehicleCameraAngle;
+  Vehicle* vehicle;
+  float    vehicleCameraDistance;
+  float    vehicleCameraHeight;
+  float    vehicleCameraAngle;
 
-  Object*   orbitCameraObject;
-  float     orbitCameraInitialDistance;
-  float     orbitCameraMinDistance;
-  float     orbitCameraMaxDistance;
-  float     orbitCameraMinAngleVertical;
-  float     orbitCameraMaxAngleVertical;
-  float     orbitCameraDistance;
-  float     orbitCameraAngleHorizontal;
-  float     orbitCameraAngleVertical;
+  Object* orbitCameraObject;
+  float   orbitCameraInitialDistance;
+  float   orbitCameraMinDistance;
+  float   orbitCameraMaxDistance;
+  float   orbitCameraMinAngleVertical;
+  float   orbitCameraMaxAngleVertical;
+  float   orbitCameraDistance;
+  float   orbitCameraAngleHorizontal;
+  float   orbitCameraAngleVertical;
 
 public:
-
   Camera();
   ~Camera();
 
@@ -49,9 +49,8 @@ public:
 
   glm::vec3 getPosition();
   glm::mat4 getViewMatrix();
-  void processInput(float dt, Input* input, bool isPaused);
-  void updatePosition(double alpha, bool isPaused);
-
+  void      processInput(float dt, Input* input, bool isPaused);
+  void      updatePosition(double alpha, bool isPaused);
 };
 
 #endif

@@ -2,14 +2,14 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "Input.h"
 #include "Utility.h"
 #include "World.h"
 
-int main(){
+int main() {
   sf::ContextSettings settings;
   settings.depthBits = 24;
   settings.stencilBits = 8;
@@ -31,7 +31,7 @@ int main(){
 
   glewExperimental = GL_TRUE;
   GLenum err = glewInit();
-  if (GLEW_OK != err){
+  if(GLEW_OK != err) {
     std::cout << "GLEW Error: " << glewGetErrorString(err) << std::endl;
   }
   std::cout << "GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
@@ -53,38 +53,36 @@ int main(){
   double accumulator = 0.0;
   double currentTime = timer.getElapsedTime().asSeconds();
 
-  int fps = 0;
+  int       fps = 0;
   sf::Clock fpsUpdateTimer;
   fpsUpdateTimer.restart();
   double totalFrameTime = 0.0;
-  int frameCounter = 0;
+  int    frameCounter = 0;
 
   bool running = true;
-  while (running){
-
+  while(running) {
     double newTime = timer.getElapsedTime().asSeconds();
     double frameTime = newTime - currentTime;
     totalFrameTime += frameTime;
     frameCounter++;
 
-    if (fpsUpdateTimer.getElapsedTime().asSeconds() >= 0.5f){
+    if(fpsUpdateTimer.getElapsedTime().asSeconds() >= 0.5f) {
       fpsUpdateTimer.restart();
       fps = int(1.0 / (totalFrameTime / frameCounter));
       totalFrameTime = 0.0;
       frameCounter = 0;
     }
 
-    if (frameTime > 0.25){
+    if(frameTime > 0.25) {
       frameTime = 0.25;
     }
 
     currentTime = newTime;
     accumulator += frameTime;
 
-    while (accumulator >= dt){
-
+    while(accumulator >= dt) {
       input.update(&renderWindow);
-      if (input.keyHit("quit") || input.getClosedEvent()){
+      if(input.keyHit("quit") || input.getClosedEvent()) {
         running = false;
       }
 

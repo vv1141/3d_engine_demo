@@ -2,16 +2,17 @@
 
 in VsOut {
   vec2 uv;
-} fsIn;
+}
+fsIn;
 
 layout(location = 0) out vec4 colour;
 
 uniform sampler2D screenTextureSampler;
 
-void main(){
+void main() {
   colour = texture(screenTextureSampler, fsIn.uv);
 
   // gamma correction
   float gamma = 2.2; // industry standard value
-  colour.rgb = pow(colour.rgb, vec3(1.0/gamma));
+  colour.rgb = pow(colour.rgb, vec3(1.0 / gamma));
 }

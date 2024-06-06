@@ -1,23 +1,23 @@
 #include "Camera.h"
 
-Camera::Camera(){
+Camera::Camera() {
   state = State::orbit;
   position = glm::vec3(0, 0, 0);
   viewMatrix = glm::mat4(1.0f);
   vehicle = nullptr;
 }
 
-Camera::~Camera(){
+Camera::~Camera() {
 }
 
-void Camera::setupVehicleCamera(Vehicle* vehicle, float distance, float height, float angle){
+void Camera::setupVehicleCamera(Vehicle* vehicle, float distance, float height, float angle) {
   this->vehicle = vehicle;
   this->vehicleCameraDistance = distance;
   this->vehicleCameraHeight = height;
   this->vehicleCameraAngle = angle;
 }
 
-void Camera::setupOrbitCamera(Object* object, float initialDistance, float minDistance, float maxDistance, float minAngleVertical, float maxAngleVertical){
+void Camera::setupOrbitCamera(Object* object, float initialDistance, float minDistance, float maxDistance, float minAngleVertical, float maxAngleVertical) {
   this->orbitCameraObject = object;
   this->orbitCameraInitialDistance = initialDistance;
   this->orbitCameraMinDistance = minDistance;
@@ -29,57 +29,53 @@ void Camera::setupOrbitCamera(Object* object, float initialDistance, float minDi
   this->orbitCameraAngleVertical = Utility::tau * 0.125f;
 }
 
-glm::vec3 Camera::getPosition(){
+glm::vec3 Camera::getPosition() {
   return position;
 }
-glm::mat4 Camera::getViewMatrix(){
+glm::mat4 Camera::getViewMatrix() {
   return viewMatrix;
 }
 
-void Camera::processInput(float dt, Input* input, bool isPaused){
-  if(input->keyHit("toggleCamera")){
-    if(state == State::vehicleFollow){
+void Camera::processInput(float dt, Input* input, bool isPaused) {
+  if(input->keyHit("toggleCamera")) {
+    if(state == State::vehicleFollow) {
       state = State::vehicleFixed;
-    } else if(state == State::vehicleFixed){
+    } else if(state == State::vehicleFixed) {
       state = State::orbit;
-    } else if(state == State::orbit){
+    } else if(state == State::orbit) {
       state = State::vehicleFollow;
     }
 
-    if(state == State::vehicleFollow){
-
-    } else if(state == State::vehicleFixed){
-
-    } else if(state == State::orbit){
+    if(state == State::vehicleFollow) {
+    } else if(state == State::vehicleFixed) {
+    } else if(state == State::orbit) {
       orbitCameraDistance = orbitCameraInitialDistance;
     }
   }
-  if(state == State::vehicleFollow){
-
-  } else if(state == State::vehicleFixed){
-
-  } else if(state == State::orbit){
-    if(input->keyDown("rotateCamera")){
+  if(state == State::vehicleFollow) {
+  } else if(state == State::vehicleFixed) {
+  } else if(state == State::orbit) {
+    if(input->keyDown("rotateCamera")) {
       orbitCameraAngleHorizontal -= (float)input->getMouseVelocity().x / 100.0;
       orbitCameraAngleVertical += (float)input->getMouseVelocity().y / 100.0;
       orbitCameraAngleVertical = glm::clamp(orbitCameraAngleVertical, orbitCameraMinAngleVertical, orbitCameraMaxAngleVertical);
     }
-    if(input->keyHit("moveCameraCloser")){
+    if(input->keyHit("moveCameraCloser")) {
       orbitCameraDistance *= 0.9f;
     }
-    if(input->keyHit("moveCameraFurther")){
+    if(input->keyHit("moveCameraFurther")) {
       orbitCameraDistance *= 1.1f;
     }
     orbitCameraDistance = glm::clamp(orbitCameraDistance, orbitCameraMinDistance, orbitCameraMaxDistance);
   }
 }
 
-void Camera::updatePosition(double alpha, bool isPaused){
+void Camera::updatePosition(double alpha, bool isPaused) {
   Object* p = vehicle->getHull()->getObject();
-  if(state == State::vehicleFollow){
+  if(state == State::vehicleFollow) {
     glm::vec3 vehiclePosition;
     glm::mat3 vehicleRotationMatrix;
-    if(isPaused){
+    if(isPaused) {
       vehiclePosition = p->getPreviousInterpolatedPosition();
       vehicleRotationMatrix = glm::mat3(glm::mat4_cast(p->getPreviousInterpolatedOrientation()));
     } else {
@@ -93,12 +89,11 @@ void Camera::updatePosition(double alpha, bool isPaused){
     this->viewMatrix = glm::lookAt(
       position,
       vehiclePosition + (1.0f - vehicleCameraAngle) * cameraHeightVector,
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    );
-  } else if(state == State::vehicleFixed){
+      glm::vec3(0.0f, 1.0f, 0.0f));
+  } else if(state == State::vehicleFixed) {
     glm::vec3 vehiclePosition;
     glm::mat3 vehicleRotationMatrix;
-    if(isPaused){
+    if(isPaused) {
       vehiclePosition = p->getPreviousInterpolatedPosition();
       vehicleRotationMatrix = glm::mat3(glm::mat4_cast(p->getPreviousInterpolatedOrientation()));
     } else {
@@ -112,13 +107,12 @@ void Camera::updatePosition(double alpha, bool isPaused){
     this->viewMatrix = glm::lookAt(
       position,
       position + directionVector,
-      directionNormal
-    );
-  } else if(state == State::orbit){
+      directionNormal);
+  } else if(state == State::orbit) {
     glm::vec3 unitHorizontal(sin(orbitCameraAngleHorizontal), 0.0f, cos(orbitCameraAngleHorizontal));
     glm::vec3 unitRotated = glm::rotate(unitHorizontal, orbitCameraAngleVertical, glm::cross(unitHorizontal, glm::vec3(0.0f, 1.0f, 0.0f)));
     glm::vec3 orbitCameraObjectPosition;
-    if(isPaused){
+    if(isPaused) {
       orbitCameraObjectPosition = orbitCameraObject->getPreviousInterpolatedPosition();
     } else {
       orbitCameraObjectPosition = orbitCameraObject->getInterpolatedPosition(alpha);
@@ -127,7 +121,6 @@ void Camera::updatePosition(double alpha, bool isPaused){
     this->viewMatrix = glm::lookAt(
       position,
       orbitCameraObjectPosition,
-      glm::vec3(0.0f, 1.0f, 0.0f)
-    );
+      glm::vec3(0.0f, 1.0f, 0.0f));
   }
 }

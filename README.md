@@ -1,14 +1,14 @@
-# 3D engine demo
+# 3D Engine Demo
 
 ![](https://github.com/vv1141/3d_engine_demo/blob/master/demo.gif)
 
-3D engine demo is a custom 3D physics and graphics engine with a simple testbed attached. It is mostly written as a side effect of learning about techniques to simulate physics for game development purposes, and as such is not a finished library or optimised for performance.
+3D Engine Demo is a custom 3D physics and graphics engine with a simple testbed attached. It is mostly written as a side effect of learning about techniques to simulate physics for game development purposes, and as such is neither a finished library nor optimised for performance.
 
 ## Features
 
 ### Physics
 * Collision detection of arbitrary polyhedrons using separating axis tests
-* Efficient complex mesh collision detection and contact manifold generation
+* Efficient complex mesh collision detection
 * Single-frame contact manifold generation, joining, and point reduction
 * Collision response with positional correction
 * Iterative constraint solver using sequential impulse method
@@ -16,7 +16,7 @@
 
 ### Graphics
 * VBO indexing
-* Phong Shading
+* Phong shading
 * Normal mapping
 * Relief mapping
 * Cascaded shadow maps

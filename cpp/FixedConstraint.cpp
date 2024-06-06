@@ -1,56 +1,52 @@
 #include "FixedConstraint.h"
 #include "Debug.h"
 
-FixedConstraint::FixedConstraint(){
+FixedConstraint::FixedConstraint() {
 }
-FixedConstraint::FixedConstraint(RigidBody* a, RigidBody* b, glm::vec3 r1, glm::vec3 r2, glm::vec3 o1, glm::vec3 o2){
+FixedConstraint::FixedConstraint(RigidBody* a, RigidBody* b, glm::vec3 r1, glm::vec3 r2, glm::vec3 o1, glm::vec3 o2) {
   this->a = a;
   this->b = b;
   this->r1Local = r1;
   this->r2Local = r2;
   this->orientationDifference = glm::conjugate(orientationFromDirection(o2)) * orientationFromDirection(o1);
 }
-FixedConstraint::~FixedConstraint(){
+FixedConstraint::~FixedConstraint() {
 }
 
-void FixedConstraint::setupConstants(float dt){
+void FixedConstraint::setupConstants(float dt) {
   biasFactorDt = biasFactor / dt;
 }
 
-void FixedConstraint::applyConstraintImpulses(bool warmstart){
-  glm::vec3 r1 = a->getRotationMatrix() * r1Local;
-  glm::vec3 r2 = b->getRotationMatrix() * r2Local;
-  glm::mat3 r1x = getSkewSymmetricMatrix(r1);
-  glm::mat3 r2x = getSkewSymmetricMatrix(r2);
-  glm::vec3 x1 = a->getPosition();
-  glm::vec3 v1 = a->getVelocity();
-  glm::vec3 w1 = a->getAngularVelocity();
-  glm::vec3 x2 = b->getPosition();
-  glm::vec3 v2 = b->getVelocity();
-  glm::vec3 w2 = b->getAngularVelocity();
-  glm::mat3 I1 = a->getInverseInertiaTensorWorld();
-  glm::mat3 I2 = b->getInverseInertiaTensorWorld();
+void FixedConstraint::applyConstraintImpulses(bool warmstart) {
+  glm::vec3   r1 = a->getRotationMatrix() * r1Local;
+  glm::vec3   r2 = b->getRotationMatrix() * r2Local;
+  glm::mat3   r1x = getSkewSymmetricMatrix(r1);
+  glm::mat3   r2x = getSkewSymmetricMatrix(r2);
+  glm::vec3   x1 = a->getPosition();
+  glm::vec3   v1 = a->getVelocity();
+  glm::vec3   w1 = a->getAngularVelocity();
+  glm::vec3   x2 = b->getPosition();
+  glm::vec3   v2 = b->getVelocity();
+  glm::vec3   w2 = b->getAngularVelocity();
+  glm::mat3   I1 = a->getInverseInertiaTensorWorld();
+  glm::mat3   I2 = b->getInverseInertiaTensorWorld();
   const float inverseMassSum = a->getInverseMass() + b->getInverseMass();
-  glm::mat3 KTransInverse = glm::inverse(
+  glm::mat3   KTransInverse = glm::inverse(
     (r1x * I1 * glm::transpose(r1x)) +
     (r2x * I2 * glm::transpose(r2x)) +
     glm::mat3(
-      inverseMassSum, 0.0f, 0.0f,
-      0.0f, inverseMassSum, 0.0f,
-      0.0f, 0.0f, inverseMassSum
-    )
-  );
+      inverseMassSum, 0.0f, 0.0f, 0.0f, inverseMassSum, 0.0f, 0.0f, 0.0f, inverseMassSum));
   glm::quat orientationError = b->getOrientation() * this->orientationDifference * glm::conjugate(a->getOrientation());
   glm::vec3 bRot = 2.0f * biasFactorDt * glm::vec3(orientationError.x, orientationError.y, orientationError.z);
   glm::mat3 KRotInverse = glm::inverse(I1 + I2);
 
   // translation velocity constraint
 
-  glm::vec3 bTrans = biasFactorDt * (x2 + r2 - x1 - r1);
+  glm::vec3       bTrans = biasFactorDt * (x2 + r2 - x1 - r1);
   const glm::vec3 Jv = v2 + glm::cross(w2, r2) - v1 - glm::cross(w1, r1);
-  glm::vec3 lambdaDt = KTransInverse * (-Jv - bTrans); // assume F_ext is 0, and it follows that v == v'
-  a->applyImpulse(-lambdaDt, x1+r1);
-  b->applyImpulse(lambdaDt, x2+r2);
+  glm::vec3       lambdaDt = KTransInverse * (-Jv - bTrans); // assume F_ext is 0, and it follows that v == v'
+  a->applyImpulse(-lambdaDt, x1 + r1);
+  b->applyImpulse(lambdaDt, x2 + r2);
 
   // rotation velocity constraint
 

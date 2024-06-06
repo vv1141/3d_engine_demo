@@ -9,7 +9,7 @@ layout(location = 2) in vec2 vertexUv;
 layout(location = 3) in vec3 vertexTangent_modelspace;
 layout(location = 4) in vec3 vertexBitangent_modelspace;
 
-out vec4 fragPosition_lightspace[SHADOW_MAP_LEVELS];
+out vec4  fragPosition_lightspace[SHADOW_MAP_LEVELS];
 out float fragDepth_viewspace;
 out vec2 uv;
 out vec3 position_worldspace;
@@ -26,9 +26,9 @@ uniform mat4 depthBiasMvp[SHADOW_MAP_LEVELS];
 uniform int lightCount;
 uniform vec4 lightVectors_cameraspace[MAX_LIGHTS];
 
-void main(){
+void main() {
   gl_Position = mvp * vec4(vertexPosition_modelspace, 1);
-  for(int i = 0; i < SHADOW_MAP_LEVELS; i++){
+  for(int i = 0; i < SHADOW_MAP_LEVELS; i++) {
     fragPosition_lightspace[i] = depthBiasMvp[i] * vec4(vertexPosition_modelspace, 1);
   }
   fragDepth_viewspace = gl_Position.z;
@@ -47,11 +47,10 @@ void main(){
   vertexToCamera_tangentspace = tbn * vertexToCamera_cameraspace;
 
   vec3 vertexToLight_cameraspace = vec3(0, 0, 0);
-  for(int i = 0; i < lightCount; i++){
-    if(lightVectors_cameraspace[i].w == 0.0){
+  for(int i = 0; i < lightCount; i++) {
+    if(lightVectors_cameraspace[i].w == 0.0) {
       vertexToLight_cameraspace = normalize(-lightVectors_cameraspace[i].xyz); // directional light
-    }
-    else if(lightVectors_cameraspace[i].w == 1.0){
+    } else if(lightVectors_cameraspace[i].w == 1.0) {
       vertexToLight_cameraspace = lightVectors_cameraspace[i].xyz + vertexToCamera_cameraspace; // point light
     }
     vertexToLight_tangentspace[i] = tbn * vertexToLight_cameraspace;
