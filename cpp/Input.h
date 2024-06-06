@@ -1,6 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
 
@@ -10,10 +11,9 @@
 
 class Input {
 public:
-
   struct KeybindProfile {
-    std::string name;
-    std::map <std::string, Keybind> keybindings;
+    std::string                    name;
+    std::map<std::string, Keybind> keybindings;
   };
 
   struct PlayerKeybindProfiles {
@@ -22,30 +22,29 @@ public:
   };
 
   struct Joystick {
-    bool isConnected;
-    unsigned int number;
+    bool                         isConnected;
+    unsigned int                 number;
     sf::Joystick::Identification identification;
 
     bool keyDown(std::string keybind);
   };
 
 private:
-
   bool windowActive;
   bool mouseInWindow;
 
-  int mouseWheelDelta;
+  int          mouseWheelDelta;
   sf::Vector2i mousePosition;
   sf::Vector2i mouseVelocity;
 
-  bool closedEvent;
+  bool       closedEvent;
   sf::Uint32 stringInput;
-  bool backspacePressed;
-  bool deletePressed;
-  bool leftArrowPressed;
-  bool rightArrowPressed;
+  bool       backspacePressed;
+  bool       deletePressed;
+  bool       leftArrowPressed;
+  bool       rightArrowPressed;
 
-  int frameTag;
+  int                         frameTag;
   std::vector<KeybindProfile> keybindProfiles;
 
   bool MouseDown[3];
@@ -56,28 +55,27 @@ private:
   bool sameJoystickIdentification(unsigned int joystickNumber, sf::Joystick::Identification identification);
 
 public:
-
   std::vector<Input::Joystick> joysticks;
 
   Input();
   ~Input();
 
-  void init();
-  void setCustomKeyBinds();
+  void            init();
+  void            setCustomKeyBinds();
   KeybindProfile* getDefaultKeybindProfileKbm();
   KeybindProfile* getDefaultKeybindProfileDs4();
-  void update(sf::RenderWindow* renderWindow);
+  void            update(sf::RenderWindow* renderWindow);
 
-  bool getLeftMouseHit();
-  bool getRightMouseHit();
-  bool getMiddleMouseHit();
-  bool getLeftMouseDown();
-  bool getRightMouseDown();
-  bool getMiddleMouseDown();
-  int getMouseWheelDelta();
+  bool         getLeftMouseHit();
+  bool         getRightMouseHit();
+  bool         getMiddleMouseHit();
+  bool         getLeftMouseDown();
+  bool         getRightMouseDown();
+  bool         getMiddleMouseDown();
+  int          getMouseWheelDelta();
   sf::Vector2i getMouseVelocity();
-  int getMouseX();
-  int getMouseY();
+  int          getMouseX();
+  int          getMouseY();
   sf::Vector2i getMousePosition();
 
   bool keyHit(std::string keybind);
@@ -90,8 +88,7 @@ public:
   bool getClosedEvent();
 
   float combineToAnalogValue(std::string keybind, Input::PlayerKeybindProfiles* keybindProfiles, Input::Joystick* joystick);
-  bool combineToDigitalValue(std::string keybind, Input::PlayerKeybindProfiles* keybindProfiles, Input::Joystick* joystick);
-
+  bool  combineToDigitalValue(std::string keybind, Input::PlayerKeybindProfiles* keybindProfiles, Input::Joystick* joystick);
 };
 
 #endif

@@ -1,19 +1,17 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Vehicle.h"
 #include "Input.h"
+#include "Vehicle.h"
 
 class Player {
 private:
-
-  Input::PlayerKeybindProfiles  keybindProfiles;
-  Input::Joystick*              joystick;
-  Vehicle*                      controlledVehicle;
-  Object*                       followedObject;
+  Input::PlayerKeybindProfiles keybindProfiles;
+  Input::Joystick*             joystick;
+  Vehicle*                     controlledVehicle;
+  Object*                      followedObject;
 
 public:
-
   Player();
   ~Player();
 
@@ -26,7 +24,6 @@ public:
   Object*                       getFollowedObject();
 
   void processLocalInput(Input* input);
-
 };
 
 #endif

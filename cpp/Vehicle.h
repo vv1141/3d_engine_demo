@@ -1,9 +1,9 @@
 #ifndef H_VEHICLE
 #define H_VEHICLE
 
-#include <vector>
-#include <list>
 #include <iterator>
+#include <list>
+#include <vector>
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -11,22 +11,21 @@
 
 #include <limits>
 
-#include "VehicleType.h"
-#include "RigidBody.h"
 #include "CollisionPair.h"
-#include "Input.h"
 #include "Constraint.h"
-#include "SuspensionConstraint.h"
 #include "FixedConstraint.h"
+#include "Input.h"
+#include "RigidBody.h"
+#include "SuspensionConstraint.h"
+#include "VehicleType.h"
 
 class Vehicle {
 private:
-
   static const float epsilon;
 
   struct Spring {
-    glm::vec3 center;
-    RigidBody* tyre;
+    glm::vec3   center;
+    RigidBody*  tyre;
     Constraint* constraint;
   };
 
@@ -49,17 +48,19 @@ private:
   VehicleType* vehicleType;
 
   enum class TyrePosition {
-    null, front, rear
+    null,
+    front,
+    rear
   };
 
   struct TyreProperties {
-    glm::vec3 position;
-    glm::quat orientation;
+    glm::vec3    position;
+    glm::quat    orientation;
     TyrePosition tyrePosition;
   };
 
-  RigidBody* hull;
-  std::vector<Spring> springs;
+  RigidBody*                  hull;
+  std::vector<Spring>         springs;
   std::vector<TyreProperties> tyreProperties;
 
   float steeringAngle;
@@ -67,12 +68,11 @@ private:
   glm::vec3 getAxleVector(RigidBody* r);
   glm::vec3 getUpVector(RigidBody* r);
   glm::vec3 getForwardVector(RigidBody* r);
-  float calculateSteeringSpeedFactor();
-  void applyAngularImpulseToTyre(RigidBody* tyre, float impulse);
-  void applyCounterRotationAngularImpulseToTyre(RigidBody* tyre, float impulse);
+  float     calculateSteeringSpeedFactor();
+  void      applyAngularImpulseToTyre(RigidBody* tyre, float impulse);
+  void      applyCounterRotationAngularImpulseToTyre(RigidBody* tyre, float impulse);
 
 public:
-
   Vehicle();
   ~Vehicle();
 
@@ -83,12 +83,12 @@ public:
   void setOrientationFromDirection(glm::vec3 direction);
   void rotate(glm::vec3 magnitude);
 
-  RigidBody* getTyre(int index);
+  RigidBody*              getTyre(int index);
   std::vector<RigidBody*> getTyres();
-  int getTyresInContactCount();
-  RigidBody* getHull();
-  Spring* getSpring(int index);
-  void applySpringForces(float dt);
+  int                     getTyresInContactCount();
+  RigidBody*              getHull();
+  Spring*                 getSpring(int index);
+  void                    applySpringForces(float dt);
 
   void processLocalInput(Input* input, Input::PlayerKeybindProfiles* keybindProfiles, Input::Joystick* joystick);
   void update(float dt);

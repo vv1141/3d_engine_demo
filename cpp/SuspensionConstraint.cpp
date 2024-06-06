@@ -1,9 +1,9 @@
 #include "SuspensionConstraint.h"
 #include "Debug.h"
 
-SuspensionConstraint::SuspensionConstraint(){
+SuspensionConstraint::SuspensionConstraint() {
 }
-SuspensionConstraint::SuspensionConstraint(RigidBody* a, RigidBody* b, glm::vec3 r1, glm::vec2 limits){
+SuspensionConstraint::SuspensionConstraint(RigidBody* a, RigidBody* b, glm::vec3 r1, glm::vec2 limits) {
   this->a = a;
   this->b = b;
   this->r1Local = r1;
@@ -14,20 +14,20 @@ SuspensionConstraint::SuspensionConstraint(RigidBody* a, RigidBody* b, glm::vec3
   this->rotationAxisA = a->getObject()->rotateVectorToLocalSpaceAndNormalize(rotationAxis);
   this->rotationAxisB = b->getObject()->rotateVectorToLocalSpaceAndNormalize(rotationAxis);
 }
-SuspensionConstraint::~SuspensionConstraint(){
+SuspensionConstraint::~SuspensionConstraint() {
 }
 
-void SuspensionConstraint::setRotationAxis(glm::vec3 rotationAxis){
+void SuspensionConstraint::setRotationAxis(glm::vec3 rotationAxis) {
   this->rotationAxisA = a->getObject()->rotateVectorToLocalSpaceAndNormalize(rotationAxis);
   this->rotationAxisB = b->getObject()->rotateVectorToLocalSpaceAndNormalize(rotationAxis);
 }
 
-void SuspensionConstraint::setupConstants(float dt){
+void SuspensionConstraint::setupConstants(float dt) {
   biasFactorDt = biasFactor / dt;
   inverseMassSum = a->getInverseMass() + b->getInverseMass();
 }
 
-void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
+void SuspensionConstraint::applyConstraintImpulses(bool warmstart) {
   glm::vec3 r1 = a->getRotationMatrix() * r1Local;
   glm::vec3 r2 = b->getRotationMatrix() * r2Local;
   glm::vec3 x1 = a->getPosition();
@@ -46,16 +46,15 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
 
   glm::vec3 r1ua = glm::cross(r1 + u, axisWorld);
   glm::vec3 r2a = glm::cross(r2, axisWorld);
-  float d = glm::dot(u, axisWorld);
-  float minLimitError = d - limits.x;
-  float maxLimitError = limits.y - d;
-  if(minLimitError <= 0.0f || maxLimitError <= 0.0f){
+  float     d = glm::dot(u, axisWorld);
+  float     minLimitError = d - limits.x;
+  float     maxLimitError = limits.y - d;
+  if(minLimitError <= 0.0f || maxLimitError <= 0.0f) {
     float KMinInverse = inverseMassSum + glm::dot(r1ua, I1 * r1ua) + glm::dot(r2a, I2 * r2a);
     if(KMinInverse > 0.0f) KMinInverse = 1.0f / KMinInverse;
     float bMin = biasFactorDt * minLimitError;
     float bMax = biasFactorDt * maxLimitError;
-    if(minLimitError <= 0.0f){
-
+    if(minLimitError <= 0.0f) {
       // velocity constraints
 
       float JvMin = glm::dot(axisWorld, v2) + glm::dot(r2a, w2) - glm::dot(axisWorld, v1) - glm::dot(r1ua, w1);
@@ -67,7 +66,7 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
 
       // position constraints
 
-      float lambdaMinError = KMinInverse * -minLimitError;
+      float     lambdaMinError = KMinInverse * -minLimitError;
       glm::vec3 v1Pseudo = a->getInverseMass() * -lambdaMinError * axisWorld;
       glm::vec3 w1Pseudo = I1 * (-lambdaMinError * r1ua);
       a->setPosition(x1 + v1Pseudo);
@@ -77,8 +76,7 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
       b->setPosition(x2 + v2Pseudo);
       b->getObject()->rotateGlobal(w2Pseudo);
     }
-    if(maxLimitError <= 0.0f){
-
+    if(maxLimitError <= 0.0f) {
       // velocity constraints
 
       float JvMax = -glm::dot(axisWorld, v2) - glm::dot(r2a, w2) + glm::dot(axisWorld, v1) + glm::dot(r1ua, w1);
@@ -90,7 +88,7 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
 
       // position constraints
 
-      float lambdaMaxError = KMinInverse * -maxLimitError;
+      float     lambdaMaxError = KMinInverse * -maxLimitError;
       glm::vec3 v1Pseudo = a->getInverseMass() * lambdaMaxError * axisWorld;
       glm::vec3 w1Pseudo = I1 * (lambdaMaxError * r1ua);
       a->setPosition(x1 + v1Pseudo);
@@ -133,12 +131,10 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
     inverseMassSum + glm::dot(r1un1, I1r1un1) + glm::dot(r2n1, I2r2n1),
     glm::dot(r1un1, I1r1un2) + glm::dot(r2n1, I2r2n2),
     glm::dot(r1un2, I1r1un1) + glm::dot(r2n2, I2r2n1),
-    inverseMassSum + glm::dot(r1un2, I1r1un2) + glm::dot(r2n2, I2r2n2)
-  ));
+    inverseMassSum + glm::dot(r1un2, I1r1un2) + glm::dot(r2n2, I2r2n2)));
   glm::vec2 Jv(
     glm::dot(n1, v2) + glm::dot(w2, r2n1) - glm::dot(n1, v1) - glm::dot(w1, r1un1),
-    glm::dot(n2, v2) + glm::dot(w2, r2n2) - glm::dot(n2, v1) - glm::dot(w1, r1un2)
-  );
+    glm::dot(n2, v2) + glm::dot(w2, r2n2) - glm::dot(n2, v1) - glm::dot(w1, r1un2));
   glm::vec2 bTrans = biasFactorDt * glm::vec2(glm::dot(u, n1), glm::dot(u, n2));
   glm::vec2 lambdaDt = KTransInverse * (-Jv - bTrans);
   glm::vec3 impulseA = -n1 * lambdaDt.x - n2 * lambdaDt.y;
@@ -165,12 +161,10 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
     glm::dot(b2a1, I1b2a1) + glm::dot(b2a1, I2b2a1),
     glm::dot(c2a1, I1b2a1) + glm::dot(c2a1, I2b2a1),
     glm::dot(b2a1, I1c2a1) + glm::dot(b2a1, I2c2a1),
-    glm::dot(c2a1, I1c2a1) + glm::dot(c2a1, I2c2a1)
-  ));
+    glm::dot(c2a1, I1c2a1) + glm::dot(c2a1, I2c2a1)));
   Jv = glm::vec2(
     -glm::dot(b2a1, w1) + glm::dot(b2a1, w2),
-    -glm::dot(c2a1, w1) + glm::dot(c2a1, w2)
-  );
+    -glm::dot(c2a1, w1) + glm::dot(c2a1, w2));
   glm::vec2 errorRotation(glm::dot(a1, b2), glm::dot(a1, c2));
   glm::vec2 bRot = biasFactorDt * errorRotation;
   lambdaDt = KRotInverse * (-Jv - bRot);
@@ -203,8 +197,7 @@ void SuspensionConstraint::applyConstraintImpulses(bool warmstart){
     inverseMassSum + glm::dot(r1un1, I1r1un1) + glm::dot(r2n1, I2r2n1),
     glm::dot(r1un1, I1r1un2) + glm::dot(r2n1, I2r2n2),
     glm::dot(r1un2, I1r1un1) + glm::dot(r2n2, I2r2n1),
-    inverseMassSum + glm::dot(r1un2, I1r1un2) + glm::dot(r2n2, I2r2n2)
-  ));
+    inverseMassSum + glm::dot(r1un2, I1r1un2) + glm::dot(r2n2, I2r2n2)));
   glm::vec2 errorTrans = glm::vec2(glm::dot(u, n1), glm::dot(u, n2));
   glm::vec2 lambdaTrans = KTransInverse * -errorTrans;
   impulseA = -n1 * lambdaTrans.x - n2 * lambdaTrans.y;

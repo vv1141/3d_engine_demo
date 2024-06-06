@@ -3,31 +3,29 @@
 
 #include <iostream>
 
-void World::addRenderObject(Model* model, Texture* texture, Object* object){
+void World::addRenderObject(Model* model, Texture* texture, Object* object) {
   renderObjects.emplace_back(&modelTexturePairs, model, texture, object);
   RenderObject::sortRenderObjects(&renderObjects);
 }
 
-bool World::writeStateToFile(std::string path){
-  unsigned int size = rigidBodies.size() * (
-                      sizeof(rigidBodies.front().getPosition()) +
-                      sizeof(rigidBodies.front().getOrientation()) +
-                      sizeof(rigidBodies.front().getVelocity())+
-                      sizeof(rigidBodies.front().getAngularVelocity())
-                      );
-  char* memBlock = new char [size];
-  char* memPointer = memBlock;
+bool World::writeStateToFile(std::string path) {
+  unsigned int size = rigidBodies.size() * (sizeof(rigidBodies.front().getPosition()) +
+                                            sizeof(rigidBodies.front().getOrientation()) +
+                                            sizeof(rigidBodies.front().getVelocity()) +
+                                            sizeof(rigidBodies.front().getAngularVelocity()));
+  char*        memBlock = new char[size];
+  char*        memPointer = memBlock;
 
-  for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+  for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
     memPointer += Utility::writeValue(memPointer, it->getPosition());
     memPointer += Utility::writeValue(memPointer, it->getOrientation());
     memPointer += Utility::writeValue(memPointer, it->getVelocity());
     memPointer += Utility::writeValue(memPointer, it->getAngularVelocity());
   }
 
-  std::ofstream file(path, std::ios::out|std::ios::binary|std::ios::trunc);
-  if(file.is_open()){
-    file.write (memBlock, size);
+  std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
+  if(file.is_open()) {
+    file.write(memBlock, size);
     file.close();
     delete[] memBlock;
   } else {
@@ -38,15 +36,15 @@ bool World::writeStateToFile(std::string path){
   return true;
 }
 
-bool World::readStateFromFile(std::string path){
+bool World::readStateFromFile(std::string path) {
   std::streampos size;
-  char* memBlock;
-  std::ifstream file(path, std::ios::in|std::ios::binary|std::ios::ate);
-  if(file.is_open()){
+  char*          memBlock;
+  std::ifstream  file(path, std::ios::in | std::ios::binary | std::ios::ate);
+  if(file.is_open()) {
     size = file.tellg();
-    memBlock = new char [size];
-    file.seekg (0, std::ios::beg);
-    file.read (memBlock, size);
+    memBlock = new char[size];
+    file.seekg(0, std::ios::beg);
+    file.read(memBlock, size);
     file.close();
     char* memPointer = memBlock;
 
@@ -54,7 +52,7 @@ bool World::readStateFromFile(std::string path){
     glm::quat orientation;
     glm::vec3 velocity;
     glm::vec3 angularVelocity;
-    for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+    for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
       memPointer += Utility::readValue(memPointer, &position);
       memPointer += Utility::readValue(memPointer, &orientation);
       memPointer += Utility::readValue(memPointer, &velocity);
@@ -74,15 +72,14 @@ bool World::readStateFromFile(std::string path){
   return true;
 }
 
-World::World(){
+World::World() {
 }
 
-World::~World(){
+World::~World() {
   glDeleteVertexArrays(1, &vertexArray);
 }
 
-void World::init(sf::RenderWindow* renderWindow, Input* input){
-
+void World::init(sf::RenderWindow* renderWindow, Input* input) {
   this->renderWindow = renderWindow;
   this->input = input;
   Utility::initRenderState(renderWindow, &projectionViewMatrix);
@@ -101,7 +98,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input){
 
   opaqueShader.setup(shadowLevelCount);
   shadowMappingShader.setup(depthMapResolution, shadowLevelCount);
-  glm::ivec2 windowSize((int) renderWindow->getSize().x, (int) renderWindow->getSize().y);
+  glm::ivec2 windowSize((int)renderWindow->getSize().x, (int)renderWindow->getSize().y);
   screenShader.setup(windowSize, multisamplingEnabled, multisamplingSampleCount);
 
   isPaused = false;
@@ -137,14 +134,14 @@ void World::init(sf::RenderWindow* renderWindow, Input* input){
 
   if(!terrainModel.loadObj("res/terrain", "terrain.obj", 1.0f, false, true)) return;
   terrainModel.bufferData();
-  if(!terrainTexture.loadTextures("res/terrain", Texture::Flags::diffuse|Texture::Flags::normal)) return;
+  if(!terrainTexture.loadTextures("res/terrain", Texture::Flags::diffuse | Texture::Flags::normal)) return;
   Model::loadCollisionMeshFromObj("res/terrain/terrain.obj", &terrainMesh, 1.0f);
 
   float collisionBoxLength = 2;
   Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 0.5f));
   const glm::vec3 boxSize(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 1.5f);
-  const float mass = 100.0f;
-  const float cubeRotationalInertia = 1.0f/6.0f * mass * collisionBoxLength*collisionBoxLength;
+  const float     mass = 100.0f;
+  const float     cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxLength * collisionBoxLength;
 
   rigidBodies.emplace_back();
   rigidBodies.back().setGeometryMesh(24, &terrainMesh);
@@ -154,38 +151,37 @@ void World::init(sf::RenderWindow* renderWindow, Input* input){
   rigidBodies.back().getGeometry()->transformToWorldSpace(rigidBodies.back().getModelMatrix());
   addRenderObject(&terrainModel, &terrainTexture, rigidBodies.back().getObject());
 
-  for(int i = 0; i < 2; i++){
-    for(int j = 0; j < 2; j++){
+  for(int i = 0; i < 2; i++) {
+    for(int j = 0; j < 2; j++) {
       rigidBodies.emplace_back();
       rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
       rigidBodies.back().setPosition(glm::vec3(
         Utility::randomDouble(0, 10),
         Utility::randomDouble(0, 10) + 10,
-        Utility::randomDouble(0, 10)
-      ));
+        Utility::randomDouble(0, 10)));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
       addRenderObject(&cubeModel, &cubeTexture, rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
-      for (auto it = rigidBodies.begin(); it != end; ++it) {
+      for(auto it = rigidBodies.begin(); it != end; ++it) {
         RigidBody* other = &(*it);
         collisionPairs.emplace_back(cubePointer, other);
       }
     }
   }
-  for(int i = 0; i < 2; i++){
-    for(int j = 0; j < 2; j++){
+  for(int i = 0; i < 2; i++) {
+    for(int j = 0; j < 2; j++) {
       float r = Utility::randomDouble(0.5, 0.5);
       rigidBodies.emplace_back();
       rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
-      rigidBodies.back().setPosition(glm::vec3(-4, 5+(i*6)+j*3, 2));
+      rigidBodies.back().setPosition(glm::vec3(-4, 5 + (i * 6) + j * 3, 2));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
       addRenderObject(&cubeModel, &cubeTexture, rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
-      for (auto it = rigidBodies.begin(); it != end; ++it) {
+      for(auto it = rigidBodies.begin(); it != end; ++it) {
         RigidBody* other = &(*it);
         collisionPairs.emplace_back(cubePointer, other);
       }
@@ -205,8 +201,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input){
     -0.7f,
     -0.7f,
     1.7652f,
-    1.7400f
-  );
+    1.7400f);
 
   vehicles.emplace_back();
   vehicles.back().setup(&vehicleType, &rigidBodies, &collisionPairs, &constraints, glm::length(gravity));
@@ -233,40 +228,38 @@ void World::init(sf::RenderWindow* renderWindow, Input* input){
   camera.setupOrbitCamera(localPlayer->getFollowedObject(), orbitCameraInitialDistance, orbitCameraMinDistance, orbitCameraMaxDistance, orbitCameraMinAngleVertical, orbitCameraMaxAngleVertical);
 }
 
-void World::update(float dt){
+void World::update(float dt) {
   if(input->keyHit("pause")) isPaused = !isPaused;
   if(input->keyHit("controls")) showControls = !showControls;
   if(input->keyHit("saveState")) writeStateToFile(stateFile);
   if(input->keyHit("loadState")) readStateFromFile(stateFile);
-  if(input->keyHit("reset") && !isPaused){
+  if(input->keyHit("reset") && !isPaused) {
     vehicles.back().setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
     vehicles.back().setOrientationFromDirection(glm::vec3(0.0f, 0.0f, 1.0f));
     vehicles.back().setVelocity(glm::vec3(0.0f));
     vehicles.back().setAngularVelocity(glm::vec3(0.0f));
     auto rigidBody = rigidBodies.begin();
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
         std::advance(rigidBody, 1);
         rigidBody->setPosition(glm::vec3(
           Utility::randomDouble(0, 10),
           Utility::randomDouble(0, 10) + 10,
-          Utility::randomDouble(0, 10)
-        ));
+          Utility::randomDouble(0, 10)));
         rigidBody->setOrientation(glm::vec3(0.0f));
         rigidBody->setVelocity(glm::vec3(0.0f));
         rigidBody->setAngularVelocity(glm::vec3(0.0f));
       }
     }
-    for(int i = 0; i < 2; i++){
-      for(int j = 0; j < 2; j++){
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
         std::advance(rigidBody, 1);
-        rigidBody->setPosition(glm::vec3(-4, 5+(i*6)+j*3, 2));
+        rigidBody->setPosition(glm::vec3(-4, 5 + (i * 6) + j * 3, 2));
         rigidBody->setOrientation(glm::vec3(0.0f));
         rigidBody->setVelocity(glm::vec3(0.0f));
         rigidBody->setAngularVelocity(glm::vec3(0.0f));
       }
     }
-
   }
   if(isPaused) {
     camera.processInput(dt, input, isPaused);
@@ -278,37 +271,37 @@ void World::update(float dt){
     localPlayer->processLocalInput(input);
     camera.processInput(dt, input, isPaused);
 
-    for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+    for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
       it->setFrameVariables();
       it->applyGravity(gravity, dt);
     }
-    for (auto it = vehicles.begin(); it != vehicles.end(); ++it) {
+    for(auto it = vehicles.begin(); it != vehicles.end(); ++it) {
       it->applySpringForces(dt);
       it->update(dt);
     }
-    for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
-      if(it->getGeometry()->type != Geometry::Type::mesh){
+    for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+      if(it->getGeometry()->type != Geometry::Type::mesh) {
         it->integrate(dt);
       }
     }
-    for (auto it = constraints.begin(); it != constraints.end(); ++it) {
+    for(auto it = constraints.begin(); it != constraints.end(); ++it) {
       (*it)->setupConstants(dt);
     }
     int constraintIterations = Constraint::iterations;
     if(constraints.size() == 0) constraintIterations = 1;
 
-    for(int i = 0; i < constraintIterations; i++){
+    for(int i = 0; i < constraintIterations; i++) {
       CollisionPair::clearDataCaches();
-      for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+      for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
         it->clearContactManifolds();
-        if(it->getGeometry()->type != Geometry::Type::mesh){
+        if(it->getGeometry()->type != Geometry::Type::mesh) {
           it->getGeometry()->transformToWorldSpace(it->getModelMatrix());
         }
       }
       std::vector<CollisionPair::Contact> objectContacts;
-      for (auto it = collisionPairs.begin(); it != collisionPairs.end(); ++it) {
+      for(auto it = collisionPairs.begin(); it != collisionPairs.end(); ++it) {
         CollisionPair::Contact contact = it->getContact();
-        if(contact.contactManifold.points.size() > 0){
+        if(contact.contactManifold.points.size() > 0) {
           objectContacts.emplace_back(contact);
           contact.A->addContactManifold(contact.contactManifold);
           contact.contactManifold.normal *= -1.0f;
@@ -316,24 +309,24 @@ void World::update(float dt){
         }
       }
       CollisionPair::sortContacts(&objectContacts, gravity);
-      for (auto it = objectContacts.begin(); it != objectContacts.end(); ++it) {
+      for(auto it = objectContacts.begin(); it != objectContacts.end(); ++it) {
         RigidBody::applyCollisionResponse(it->A, it->B, it->contactManifold);
       }
-      for (auto it = constraints.begin(); it != constraints.end(); ++it) {
+      for(auto it = constraints.begin(); it != constraints.end(); ++it) {
         (*it)->applyConstraintImpulses(false);
       }
     }
-    for (auto it = vehicles.begin(); it != vehicles.end(); ++it) {
+    for(auto it = vehicles.begin(); it != vehicles.end(); ++it) {
       it->applyRollingResistance();
     }
-    for (auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
-      if(!it->isStatic()){
+    for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
+      if(!it->isStatic()) {
         it->determineSupportManifold(gravity);
         it->applyRestDetection();
       }
     }
   }
-  if(vehicles.back().getHull()->getPosition().y < -5.0f){
+  if(vehicles.back().getHull()->getPosition().y < -5.0f) {
     vehicles.back().setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
     vehicles.back().setOrientationFromDirection(glm::vec3(0.0f, 0.0f, 1.0f));
     vehicles.back().setVelocity(glm::vec3(0.0f));
@@ -341,11 +334,11 @@ void World::update(float dt){
   }
 }
 
-void World::updateCameraPosition(double alpha){
+void World::updateCameraPosition(double alpha) {
   camera.updatePosition(alpha, isPaused);
 }
 
-void World::renderGeometry(double alpha){
+void World::renderGeometry(double alpha) {
   renderWindow->setActive(true);
 
   glBindVertexArray(vertexArray);
@@ -355,49 +348,44 @@ void World::renderGeometry(double alpha){
   directionalLights.push_back(Light::DirectionalLight{glm::vec3(-0.7f, -0.8f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f});
   std::vector<Light::PointLight> pointLights;
 
-  glm::mat4 view = camera.getViewMatrix();
+  glm::mat4              view = camera.getViewMatrix();
   std::vector<glm::vec2> clippingPlanes = shadowMappingShader.calculateClippingPlanes(nearClippingPlane, farClippingPlane, shadowLevelCount);
   std::vector<glm::mat4> projectionMatrices = shadowMappingShader.calculateProjectionMatrices(renderWindow, fov, clippingPlanes);
   std::vector<glm::mat4> projectionViewMatrices;
-  for (auto it = projectionMatrices.begin(); it != projectionMatrices.end(); ++it) {
+  for(auto it = projectionMatrices.begin(); it != projectionMatrices.end(); ++it) {
     projectionViewMatrices.push_back((*it) * view);
   }
   std::vector<glm::mat4> projectionViewInverseMatrices;
-  for (auto it = projectionViewMatrices.begin(); it != projectionViewMatrices.end(); ++it) {
+  for(auto it = projectionViewMatrices.begin(); it != projectionViewMatrices.end(); ++it) {
     projectionViewInverseMatrices.push_back(glm::inverse(*it));
   }
 
   glm::mat4 projection = glm::perspective(
     glm::radians(fov),
-    (float) renderWindow->getSize().x / (float) renderWindow->getSize().y,
+    (float)renderWindow->getSize().x / (float)renderWindow->getSize().y,
     nearClippingPlane,
-    farClippingPlane
-  );
+    farClippingPlane);
   projectionViewMatrix = projection * view;
 
   glm::vec3 lightDir = glm::normalize(directionalLights.back().direction);
-	glm::mat4 depthViewMatrix = glm::lookAt(glm::vec3(0,0,0), lightDir, glm::vec3(0,1,0));
+  glm::mat4 depthViewMatrix = glm::lookAt(glm::vec3(0, 0, 0), lightDir, glm::vec3(0, 1, 0));
 
   std::vector<glm::mat4> depthViewProjections;
-  for (auto it = projectionViewInverseMatrices.begin(); it != projectionViewInverseMatrices.end(); ++it) {
+  for(auto it = projectionViewInverseMatrices.begin(); it != projectionViewInverseMatrices.end(); ++it) {
     depthViewProjections.push_back(shadowMappingShader.calculateDepthViewProjection(directionalLights.back().direction, *it, zMult, zBias));
   }
 
   shadowMappingShader.render(&renderObjects, alpha, depthViewProjections);
 
-  for (auto it = clippingPlanes.begin(); it != clippingPlanes.end(); ++it) {
+  for(auto it = clippingPlanes.begin(); it != clippingPlanes.end(); ++it) {
     glm::vec4 vecView(0.0f, 0.0f, it->y, 1.0f);
     glm::vec4 vecClip = projection * vecView;
     it->y = -vecClip.z;
   }
 
   glm::mat4 biasMatrix(
-    0.5, 0.0, 0.0, 0.0,
-    0.0, 0.5, 0.0, 0.0,
-    0.0, 0.0, 0.5, 0.0,
-    0.5, 0.5, 0.5, 1.0
-  );
-  for (auto it = depthViewProjections.begin(); it != depthViewProjections.end(); ++it) {
+    0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
+  for(auto it = depthViewProjections.begin(); it != depthViewProjections.end(); ++it) {
     *it = biasMatrix * (*it);
   }
 
@@ -416,7 +404,7 @@ void World::renderGeometry(double alpha){
   screenShader.render(renderWindow, true);
 }
 
-void World::renderUi(int fps){
+void World::renderUi(int fps) {
   glBindVertexArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   renderWindow->setActive(false);
@@ -425,23 +413,36 @@ void World::renderUi(int fps){
 
   Utility::renderText(glm::vec2(5, 5), std::to_string(fps) + " FPS", sf::Color(255, 255, 255, 200));
   if(isPaused) Utility::renderText(glm::vec2(100, 5), "PAUSED", sf::Color(255, 255, 255, 200));
-  if(showControls){
+  if(showControls) {
     Utility::renderRectangle(glm::vec2(10, 30), glm::vec2(320, 345), sf::Color(0, 0, 0, 100));
     Utility::renderText(glm::vec2(20, 30), "Keyboard", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 60), "Steer", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 60), "[A, D]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 80), "Accelerate", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 80), "[W]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 100), "Reverse", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 100), "[S]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 120), "Next camera", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 120), "[C]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 140), "Reset", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 140), "[R]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 160), "Pause", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 160), "[P]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 180), "Show/hide controls", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 180), "[F1]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 200), "Save state", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 200), "[F2]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 220), "Load state", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 220), "[F3]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 240), "Quit", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 240), "[Esc]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 60), "Steer", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 60), "[A, D]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 80), "Accelerate", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 80), "[W]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 100), "Reverse", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 100), "[S]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 120), "Next camera", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 120), "[C]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 140), "Reset", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 140), "[R]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 160), "Pause", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 160), "[P]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 180), "Show/hide controls", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 180), "[F1]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 200), "Save state", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 200), "[F2]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 220), "Load state", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 220), "[F3]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 240), "Quit", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 240), "[Esc]", sf::Color(255, 255, 255, 200));
     Utility::renderText(glm::vec2(20, 280), "Controller", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 310), "Steer", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 310), "[Left joystick]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 330), "Accelerate", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 330), "[Rt]", sf::Color(255, 255, 255, 200));
-    Utility::renderText(glm::vec2(20, 350), "Reverse", sf::Color(255, 255, 255, 200)); Utility::renderText(glm::vec2(200, 350), "[Lt]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 310), "Steer", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 310), "[Left joystick]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 330), "Accelerate", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 330), "[Rt]", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(20, 350), "Reverse", sf::Color(255, 255, 255, 200));
+    Utility::renderText(glm::vec2(200, 350), "[Lt]", sf::Color(255, 255, 255, 200));
   }
   renderWindow->popGLStates();
 }

@@ -3,13 +3,12 @@
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/norm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/norm.hpp>
 #include <limits>
 
 class Object {
 private:
-
   glm::vec3 position;
   glm::vec3 previousPosition;
   glm::vec3 previousInterpolatedPosition;
@@ -31,7 +30,6 @@ private:
   void      calculateInterpolatedModelMatrix(float alpha);
 
 public:
-
   Object();
   ~Object();
 
@@ -63,9 +61,8 @@ public:
   glm::vec3 getPreviousInterpolatedPosition();
   glm::quat getPreviousInterpolatedOrientation();
 
-  void      recalculateModelMatrix();
-  void      integrate(float dt);
-
+  void recalculateModelMatrix();
+  void integrate(float dt);
 };
 
 #endif

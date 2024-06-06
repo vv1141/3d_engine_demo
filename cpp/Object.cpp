@@ -1,17 +1,16 @@
 #include "Object.h"
 
-glm::quat Object::quaternionIntegrate(glm::quat q, glm::vec3 omega, float dt){
+glm::quat Object::quaternionIntegrate(glm::quat q, glm::vec3 omega, float dt) {
   glm::vec3 v = omega * dt;
-  float theta = glm::length(v);
+  float     theta = glm::length(v);
   glm::quat vq;
-  float s;
+  float     s;
 
   // rotation quaternion: q = [cos(1/2theta), w*sin(1/2theta)], where w is a unit vector
-  if(theta > 0.0f){
+  if(theta > 0.0f) {
     vq.w = cos(0.5f * theta);
     s = sin(0.5f * theta) / theta;
-  }
-  else{
+  } else {
     vq.w = 1.0f;
     s = 1.0f;
   }
@@ -22,8 +21,8 @@ glm::quat Object::quaternionIntegrate(glm::quat q, glm::vec3 omega, float dt){
   return vq * q; //Two rotation quaternions can be combined into one equivalent quaternion by the relation: q′ = q2q1
 }
 
-void Object::calculateInterpolatedModelMatrix(float alpha){
-  if(parentObject == nullptr){
+void Object::calculateInterpolatedModelMatrix(float alpha) {
+  if(parentObject == nullptr) {
     previousInterpolatedPosition = getInterpolatedPosition(alpha);
     previousInterpolatedOrientation = getInterpolatedOrientation(alpha);
     glm::mat4 translation = glm::translate(glm::mat4(1.0f), previousInterpolatedPosition);
@@ -31,14 +30,14 @@ void Object::calculateInterpolatedModelMatrix(float alpha){
     modelInterpolated = translation * rotation;
     modelInterpolatedUpdated = true;
   } else {
-    if(!parentObject->getModelInterpolatedUpdated()){
+    if(!parentObject->getModelInterpolatedUpdated()) {
       parentObject->calculateInterpolatedModelMatrix(alpha);
     }
     modelInterpolated = parentObject->getInterpolatedModelMatrix(alpha) * model;
   }
 }
 
-Object::Object(){
+Object::Object() {
   position = glm::vec3(0.0f, 0.0f, 0.0f);
   previousPosition = position;
   previousInterpolatedPosition = position;
@@ -51,108 +50,108 @@ Object::Object(){
   recalculateModelMatrix();
 }
 
-Object::~Object(){
+Object::~Object() {
 }
 
-void Object::setPosition(glm::vec3 position){
+void Object::setPosition(glm::vec3 position) {
   this->position = position;
   if(isStatic) previousPosition = position;
   recalculateModelMatrix();
 }
 
-glm::vec3 Object::getPosition(){
+glm::vec3 Object::getPosition() {
   return position;
 }
 
-void Object::setVelocity(glm::vec3 velocity){
+void Object::setVelocity(glm::vec3 velocity) {
   this->velocity = velocity;
 }
 
-glm::vec3 Object::getVelocity(){
+glm::vec3 Object::getVelocity() {
   return velocity;
 }
 
-void Object::setOrientation(glm::quat orientation){
+void Object::setOrientation(glm::quat orientation) {
   this->orientation = orientation;
   recalculateModelMatrix();
 }
 
-void Object::setOrientationFromDirection(glm::vec3 direction){
+void Object::setOrientationFromDirection(glm::vec3 direction) {
   glm::vec3 normalizedDirection = glm::normalize(direction);
-  if(normalizedDirection == glm::vec3(0.0f, 1.0f, 0.0f)){
+  if(normalizedDirection == glm::vec3(0.0f, 1.0f, 0.0f)) {
     normalizedDirection = glm::vec3(0.0f, 1.0f, 0.00001f);
   }
   orientation = glm::quatLookAt(normalizedDirection, glm::vec3(0.0f, 1.0f, 0.0f));
   recalculateModelMatrix();
 }
 
-void Object::setOrientationFromDirection(glm::vec3 direction, glm::vec3 up){
+void Object::setOrientationFromDirection(glm::vec3 direction, glm::vec3 up) {
   glm::vec3 normalizedDirection = glm::normalize(direction);
   orientation = glm::quatLookAt(normalizedDirection, up); // assume direction is not parallel to up vector;
   recalculateModelMatrix();
 }
 
-void Object::setPositionAndOrientation(glm::vec3 position, glm::quat orientation){
+void Object::setPositionAndOrientation(glm::vec3 position, glm::quat orientation) {
   this->position = position;
   this->orientation = orientation;
   recalculateModelMatrix();
 }
 
-void Object::rotate(glm::vec3 magnitude){
+void Object::rotate(glm::vec3 magnitude) {
   orientation = quaternionIntegrate(orientation, getRotationMatrix() * magnitude, 1.0f);
   orientation = glm::normalize(orientation);
   recalculateModelMatrix();
 }
 
-void Object::rotateGlobal(glm::vec3 magnitude){
+void Object::rotateGlobal(glm::vec3 magnitude) {
   orientation = quaternionIntegrate(orientation, magnitude, 1.0f);
   orientation = glm::normalize(orientation);
   recalculateModelMatrix();
 }
 
-glm::vec3 Object::rotateVectorToLocalSpaceAndNormalize(glm::vec3 v){
+glm::vec3 Object::rotateVectorToLocalSpaceAndNormalize(glm::vec3 v) {
   return glm::normalize(glm::conjugate(orientation) * v);
 }
 
-glm::quat Object::getOrientation(){
+glm::quat Object::getOrientation() {
   return orientation;
 }
 
-void Object::setAngularVelocity(glm::vec3 angularVelocity){
+void Object::setAngularVelocity(glm::vec3 angularVelocity) {
   this->angularVelocity = angularVelocity;
 }
 
-glm::vec3 Object::getAngularVelocity(){
+glm::vec3 Object::getAngularVelocity() {
   return angularVelocity;
 }
 
-bool Object::getModelInterpolatedUpdated(){
+bool Object::getModelInterpolatedUpdated() {
   return modelInterpolatedUpdated;
 }
 
-void Object::setParentObject(Object* parentObject){
+void Object::setParentObject(Object* parentObject) {
   this->parentObject = parentObject;
 }
 
-void Object::setStatic(bool isStatic){
+void Object::setStatic(bool isStatic) {
   this->isStatic = isStatic;
 }
 
-glm::mat4 Object::getModelMatrix(){
+glm::mat4 Object::getModelMatrix() {
   return model;
 }
 
-glm::mat4 Object::getModelMatrixInverse(){
+glm::mat4 Object::getModelMatrixInverse() {
   return modelInverse;
 }
 
-glm::mat3 Object::getRotationMatrix(){
+glm::mat3 Object::getRotationMatrix() {
   return glm::mat3(model);
 }
 
-glm::mat4 Object::getInterpolatedModelMatrix(float alpha){
-  if(parentObject == nullptr){
-    if(!modelInterpolatedUpdated){
+glm::mat4 Object::getInterpolatedModelMatrix(float alpha) {
+  if(parentObject == nullptr) {
+    if(!modelInterpolatedUpdated) {
       calculateInterpolatedModelMatrix(alpha);
     }
   } else {
@@ -161,23 +160,23 @@ glm::mat4 Object::getInterpolatedModelMatrix(float alpha){
   return modelInterpolated;
 }
 
-glm::vec3 Object::getInterpolatedPosition(float alpha){
+glm::vec3 Object::getInterpolatedPosition(float alpha) {
   return (position * alpha) + (previousPosition * (1.0f - alpha));
 }
 
-glm::quat Object::getInterpolatedOrientation(float alpha){
+glm::quat Object::getInterpolatedOrientation(float alpha) {
   return glm::slerp(previousOrientation, orientation, alpha);
 }
 
-glm::vec3 Object::getPreviousInterpolatedPosition(){
+glm::vec3 Object::getPreviousInterpolatedPosition() {
   return previousInterpolatedPosition;
 }
 
-glm::quat Object::getPreviousInterpolatedOrientation(){
+glm::quat Object::getPreviousInterpolatedOrientation() {
   return previousInterpolatedOrientation;
 }
 
-void Object::recalculateModelMatrix(){
+void Object::recalculateModelMatrix() {
   glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
   glm::mat4 rotation = glm::mat4_cast(orientation);
   model = translation * rotation;
@@ -185,7 +184,7 @@ void Object::recalculateModelMatrix(){
   modelInterpolatedUpdated = false;
 }
 
-void Object::integrate(float dt){
+void Object::integrate(float dt) {
   previousPosition = position;
   previousOrientation = orientation;
   position += velocity * dt;
