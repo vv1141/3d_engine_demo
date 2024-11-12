@@ -23,14 +23,18 @@
 * Multisample anti-aliasing
 * Gamma correction
 
+## Pre-built binaries
+
+Pre-built binaries (x86 only) are available for Linux and Windows.
+
 ## Building from source
 
 ### Dependencies
 
-* [OpenGL](https://www.opengl.org/)
-* [GLEW](https://glew.sourceforge.net/)
-* [GLM](https://github.com/g-truc/glm)
-* [SFML](https://www.sfml-dev.org/)
+* [OpenGL](https://www.opengl.org/) - rendering
+* [GLEW](https://glew.sourceforge.net/) - OpenGL extension loading
+* [GLM](https://github.com/g-truc/glm) - vector/matrix implementations and common operations
+* [SFML](https://www.sfml-dev.org/) - window management, OpenGL context creation, input and font handling
 
 The required packages on Debian, for example:
 
@@ -52,7 +56,3 @@ make
 cd bin
 ./3d_engine
 ```
-
-## Pre-built binaries
-
-Pre-built binaries (x86 only) are available for Linux and Windows.
