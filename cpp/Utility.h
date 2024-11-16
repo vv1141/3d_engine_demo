@@ -2,8 +2,8 @@
 #define UTILITY_H
 
 #include <GL/glew.h>
-#include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/OpenGL.hpp>
 #include <glm/glm.hpp>
 
 #include <cstring>
@@ -39,6 +39,7 @@ public:
   static glm::mat4*        projectionViewMatrix;
   static glm::vec2         screenSize;
 
+  static char*        fontData;
   static sf::Font     font;
   static sf::Text     text;
   static std::mt19937 generator;
@@ -59,52 +60,56 @@ public:
   static void      renderMarker(glm::vec2 position, sf::Color colour);
   static void      renderCircle(glm::vec2 position, float size, sf::Color colour);
   static void      renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colour);
+  static void      renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colour, float angle);
   static void      renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colour, sf::Texture);
-  static void      initTextRendering(std::string fontPath);
+  static void      initTextRendering();
   static void      renderText(glm::vec2 position, std::string string);
   static void      renderText(glm::vec2 position, std::string string, sf::Color colour);
+  static void      renderTitleText(glm::vec2 position, std::string string);
+  static void      renderMenuText(glm::vec2 position, std::string string, sf::Color colour);
   static void      initPRNG();
   static int       randomInt(int min, int max);
   static double    randomDouble(double min, double max);
   static glm::vec2 getScreenCoordinates(glm::vec3 position);
+  static bool      writeFile(std::string path, char* source, unsigned int sizeInBytes);
+  static bool      readFile(std::string path, char** destination, unsigned int* sizeInBytes);
+
+  static bool checkFile(std::string path);
+  static bool readFontFromMemoryBlock(char** memPointer);
 
   template<class T> static unsigned int getVectorDataSize(std::vector<T>* vector) {
     return 4 + vector->size() * sizeof(T);
   }
 
-  template<class T> static unsigned int writeValue(char* destination, T value) {
+  template<class T> static void writeValue(char** destination, T value) {
     size_t dataSize = sizeof(T);
-    std::memcpy(destination, &value, dataSize);
-    return dataSize;
+    memcpy(*destination, &value, dataSize);
+    *destination += dataSize;
   }
 
-  template<class T> static unsigned int writeVector(char* destination, std::vector<T>* vector) {
-    unsigned int bytesWritten = 0;
+  template<class T> static void writeVector(char** destination, std::vector<T>* vector) {
     unsigned int size = (unsigned int)vector->size();
-    std::memcpy(destination, &size, 4);
-    bytesWritten += 4;
+    memcpy(*destination, &size, 4);
+    *destination += 4;
     size_t vectorDataSize = size * sizeof(T);
-    std::memcpy(destination + bytesWritten, vector->data(), vectorDataSize);
-    bytesWritten += vectorDataSize;
-    return bytesWritten;
+    memcpy(*destination, vector->data(), vectorDataSize);
+    *destination += vectorDataSize;
   }
 
-  template<class T> static unsigned int readValue(char* source, T* value) {
+  template<class T> static void readValue(char** source, T* value) {
     size_t dataSize = sizeof(T);
-    std::memcpy(value, source, dataSize);
-    return dataSize;
+    memcpy(value, *source, dataSize);
+    *source += dataSize;
   }
 
-  template<class T> static unsigned int readVector(char* source, std::vector<T>* vector) {
-    unsigned int bytesRead = 0;
+  template<class T> static void readVector(char** source, std::vector<T>* vector) {
     unsigned int size;
-    std::memcpy(&size, source, 4);
+    memcpy(&size, *source, 4);
     vector->resize(size);
-    bytesRead += 4;
+    *source += 4;
     size_t vectorDataSize = size * sizeof(T);
-    std::memcpy(vector->data(), source + bytesRead, vectorDataSize);
-    bytesRead += vectorDataSize;
-    return bytesRead;
+    memcpy(vector->data(), *source, vectorDataSize);
+    *source += vectorDataSize;
   }
 };
 

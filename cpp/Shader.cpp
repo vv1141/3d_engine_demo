@@ -7,106 +7,79 @@ Shader::~Shader() {
   glDeleteProgram(programId);
 }
 
-GLuint Shader::loadShaders(std::string vertexShader, std::string fragmentShader, std::string geometryShader = "") {
-  std::string vertexShaderPath = "glsl/" + vertexShader;
-  std::string fragmentShaderPath = "glsl/" + fragmentShader;
-  std::string geometryShaderPath = "glsl/" + geometryShader;
+std::string Shader::loadShader(std::string path) {
+  std::string   code;
+  std::ifstream shaderStream(path, std::ios::in);
+  if(shaderStream.is_open()) {
+    std::stringstream sstr;
+    sstr << shaderStream.rdbuf();
+    code = sstr.str();
+    shaderStream.close();
+    return code;
+  } else {
+    Debug::log("Error: Failed reading ", path);
+    return "";
+  }
+  return "";
+}
 
+std::string Shader::loadShader(char** memPointer) {
+  unsigned int size;
+  Utility::readValue(memPointer, &size);
+  std::string code(*memPointer, size);
+  *memPointer += size;
+  return code;
+}
+
+bool Shader::loadShaders(std::string vertexShader, std::string fragmentShader) {
+  std::string basePath = "glsl/";
+  vertexShaderCode = loadShader(basePath + vertexShader);
+  if(vertexShaderCode == "") {
+    return false;
+  }
+  fragmentShaderCode = loadShader(basePath + fragmentShader);
+  if(fragmentShaderCode == "") {
+    return false;
+  }
+  return true;
+}
+
+void Shader::loadShaders(char** memPointer) {
+  vertexShaderCode = loadShader(memPointer);
+  fragmentShaderCode = loadShader(memPointer);
+}
+
+void Shader::compileShader(GLuint id, std::string code) {
+  char const* shader = code.c_str();
+  glShaderSource(id, 1, &(shader), NULL);
+  GLint result = GL_FALSE;
+  int   infoLogLength;
+  glCompileShader(id);
+  glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+  glGetShaderiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
+  if(infoLogLength > 0) {
+    std::vector<char> errorMessage(infoLogLength + 1);
+    glGetShaderInfoLog(id, infoLogLength, NULL, &errorMessage[0]);
+    printf("%s\n", &errorMessage[0]);
+  }
+}
+
+GLuint Shader::createShaders() {
   GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   GLuint fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-  GLuint geometryShaderId = 0;
-  if(geometryShader != "") {
-    geometryShaderId = glCreateShader(GL_GEOMETRY_SHADER);
-  }
-
-  std::string   vertexShaderCode;
-  std::ifstream vertexShaderStream(vertexShaderPath, std::ios::in);
-  if(vertexShaderStream.is_open()) {
-    std::stringstream sstr;
-    sstr << vertexShaderStream.rdbuf();
-    vertexShaderCode = sstr.str();
-    vertexShaderStream.close();
-  } else {
-    Debug::log("Error: Failed reading ", vertexShaderPath);
-    return 0;
-  }
-
-  std::string   fragmentShaderCode;
-  std::ifstream fragmentShaderStream(fragmentShaderPath, std::ios::in);
-  if(fragmentShaderStream.is_open()) {
-    std::stringstream sstr;
-    sstr << fragmentShaderStream.rdbuf();
-    fragmentShaderCode = sstr.str();
-    fragmentShaderStream.close();
-  } else {
-    Debug::log("Error: Failed reading ", fragmentShaderPath);
-    return 0;
-  }
-
-  std::string geometryShaderCode;
-  if(geometryShader != "") {
-    std::ifstream geometryShaderStream(geometryShaderPath, std::ios::in);
-    if(geometryShaderStream.is_open()) {
-      std::stringstream sstr;
-      sstr << geometryShaderStream.rdbuf();
-      geometryShaderCode = sstr.str();
-      geometryShaderStream.close();
-    } else {
-      Debug::log("Error: Failed reading ", geometryShaderPath);
-      return 0;
-    }
-  }
 
   GLint result = GL_FALSE;
   int   infoLogLength;
 
-  Debug::log("Compiling vertex shader: ", vertexShaderPath);
-  char const* vertexSourcePointer = vertexShaderCode.c_str();
-  glShaderSource(vertexShaderId, 1, &vertexSourcePointer, NULL);
-  glCompileShader(vertexShaderId);
-
-  glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &result);
-  glGetShaderiv(vertexShaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
-  if(infoLogLength > 0) {
-    std::vector<char> vertexShaderErrorMessage(infoLogLength + 1);
-    glGetShaderInfoLog(vertexShaderId, infoLogLength, NULL, &vertexShaderErrorMessage[0]);
-    printf("%s\n", &vertexShaderErrorMessage[0]);
-  }
-
-  Debug::log("Compiling fragment shader: ", fragmentShaderPath);
-  char const* fragmentSourcePointer = fragmentShaderCode.c_str();
-  glShaderSource(fragmentShaderId, 1, &fragmentSourcePointer, NULL);
-  glCompileShader(fragmentShaderId);
-
-  glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &result);
-  glGetShaderiv(fragmentShaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
-  if(infoLogLength > 0) {
-    std::vector<char> fragmentShaderErrorMessage(infoLogLength + 1);
-    glGetShaderInfoLog(fragmentShaderId, infoLogLength, NULL, &fragmentShaderErrorMessage[0]);
-    printf("%s\n", &fragmentShaderErrorMessage[0]);
-  }
-
-  if(geometryShader != "") {
-    Debug::log("Compiling geometry shader: ", geometryShaderPath);
-    char const* geometrySourcePointer = geometryShaderCode.c_str();
-    glShaderSource(geometryShaderId, 1, &geometrySourcePointer, NULL);
-    glCompileShader(geometryShaderId);
-
-    glGetShaderiv(geometryShaderId, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(geometryShaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
-    if(infoLogLength > 0) {
-      std::vector<char> geometryShaderErrorMessage(infoLogLength + 1);
-      glGetShaderInfoLog(geometryShaderId, infoLogLength, NULL, &geometryShaderErrorMessage[0]);
-      printf("%s\n", &geometryShaderErrorMessage[0]);
-    }
-  }
+  Debug::log("Compiling vertex shader");
+  compileShader(vertexShaderId, vertexShaderCode);
+  Debug::log("Compiling fragment shader");
+  compileShader(fragmentShaderId, fragmentShaderCode);
 
   GLuint programId = glCreateProgram();
+
   glAttachShader(programId, vertexShaderId);
   glAttachShader(programId, fragmentShaderId);
-  if(geometryShader != "") {
-    glAttachShader(programId, geometryShaderId);
-  }
   glLinkProgram(programId);
 
   glGetProgramiv(programId, GL_LINK_STATUS, &result);
@@ -121,10 +94,6 @@ GLuint Shader::loadShaders(std::string vertexShader, std::string fragmentShader,
   glDeleteShader(vertexShaderId);
   glDetachShader(programId, fragmentShaderId);
   glDeleteShader(fragmentShaderId);
-  if(geometryShader != "") {
-    glDetachShader(programId, geometryShaderId);
-    glDeleteShader(geometryShaderId);
-  }
 
   return programId;
 }
@@ -135,7 +104,7 @@ OpaqueShader::~OpaqueShader() {
 }
 
 bool OpaqueShader::setup(int shadowLevelCount) {
-  programId = loadShaders("SimpleShader.vert", "SimpleShader.frag");
+  programId = createShaders();
   if(!programId) return false;
   glUseProgram(programId);
   enableReliefMapping = glGetUniformLocation(programId, "enableReliefMapping");
@@ -301,7 +270,7 @@ ShadowMappingShader::~ShadowMappingShader() {
 bool ShadowMappingShader::setup(int depthMapResolution, int shadowLevelCount) {
   this->depthMapResolution = depthMapResolution;
   this->shadowLevelCount = shadowLevelCount;
-  programId = loadShaders("ShadowMappingShader.vert", "ShadowMappingShader.frag");
+  programId = createShaders();
   if(!programId) return false;
   glUseProgram(programId);
   mvpMatrixId = glGetUniformLocation(programId, "depthMvp");
@@ -321,13 +290,13 @@ std::vector<glm::vec2> ShadowMappingShader::calculateClippingPlanes(float nearCl
 std::vector<glm::mat4> ShadowMappingShader::calculateProjectionMatrices(const sf::RenderWindow* renderWindow, float fov, std::vector<glm::vec2> planes) {
   std::vector<glm::mat4> matrices;
   for(int i = 0; i < planes.size(); i++) {
-    const float near = planes[i].x;
-    const float far = planes[i].y;
+    const float near2 = planes[i].x;
+    const float far2 = planes[i].y;
     glm::mat4   projection = glm::perspective(
       glm::radians(fov),
       (float)renderWindow->getSize().x / (float)renderWindow->getSize().y,
-      near,
-      far);
+      near2,
+      far2);
     matrices.push_back(projection);
   }
   return matrices;
@@ -479,7 +448,7 @@ ScreenShader::~ScreenShader() {
 }
 
 bool ScreenShader::setup(glm::ivec2 windowSize, bool multisamplingEnabled, int multisamplingSampleCount) {
-  programId = loadShaders("ScreenShader.vert", "ScreenShader.frag");
+  programId = createShaders();
   if(!programId) return false;
   glUseProgram(programId);
   screenTextureSampler = glGetUniformLocation(programId, "screenTextureSampler");
