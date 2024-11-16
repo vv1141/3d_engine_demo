@@ -25,7 +25,7 @@
 
 ## Pre-built binaries
 
-Pre-built binaries (x86 only) are available for Linux and Windows.
+Pre-built binaries (x86 only) are available for Linux and Windows in [releases](https://github.com/vv1141/3d_engine_demo/releases).
 
 ## Building from source
 
