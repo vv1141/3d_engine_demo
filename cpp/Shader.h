@@ -12,12 +12,19 @@
 class Shader {
 private:
 public:
-  GLuint programId;
+  GLuint      programId;
+  std::string vertexShaderCode;
+  std::string fragmentShaderCode;
 
   Shader();
   virtual ~Shader();
 
-  GLuint loadShaders(std::string vertexShader, std::string fragmentShader, std::string geometryShader);
+  std::string loadShader(std::string path);
+  std::string loadShader(char** memPointer);
+  bool        loadShaders(std::string vertexShader, std::string fragmentShader);
+  void        loadShaders(char** memPointer);
+  void        compileShader(GLuint id, std::string code);
+  GLuint      createShaders();
 };
 
 class OpaqueShader: public Shader {
@@ -96,7 +103,7 @@ private:
 public:
   GLuint screenTextureSampler;
 
-  Polygon screenQuad;
+  Polygon2 screenQuad;
   GLuint  framebuffer;
   GLuint  texture;
   GLuint  renderbuffer;

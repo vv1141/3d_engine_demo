@@ -6,7 +6,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-class Polygon {
+class Polygon2 {
 private:
   static int uniqueIdGenerator;
   int        id;
@@ -23,8 +23,8 @@ private:
   GLenum usage;
 
 public:
-  Polygon();
-  ~Polygon();
+  Polygon2();
+  ~Polygon2();
 
   void         bufferData();
   void         bindBuffers();

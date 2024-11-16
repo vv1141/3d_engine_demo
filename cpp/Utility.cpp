@@ -159,6 +159,15 @@ void Utility::renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colo
   renderWindow->draw(rectangle);
 }
 
+void Utility::renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colour, float angle) {
+  sf::RectangleShape rectangle(sf::Vector2f(size.x, size.y));
+  rectangle.setFillColor(colour);
+  rectangle.setPosition(position.x, position.y);
+  rectangle.setOrigin(size.x * 0.5f, size.y * 0.5f);
+  rectangle.setRotation(angle);
+  renderWindow->draw(rectangle);
+}
+
 void Utility::renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colour, sf::Texture texture) {
   sf::RectangleShape rectangle(sf::Vector2f(size.x, size.y));
   rectangle.setTexture(&texture);
@@ -171,14 +180,12 @@ void Utility::renderRectangle(glm::vec2 position, glm::vec2 size, sf::Color colo
 sf::Font Utility::font = sf::Font();
 sf::Text Utility::text = sf::Text();
 
-void Utility::initTextRendering(std::string fontPath) {
-  Utility::font.loadFromFile(fontPath);
+void Utility::initTextRendering() {
   Utility::text.setFont(Utility::font);
-  Utility::text.setCharacterSize(18);
-  Utility::text.setFillColor(sf::Color::White);
 }
 
 void Utility::renderText(glm::vec2 position, std::string string) {
+  Utility::text.setCharacterSize(18);
   Utility::text.setPosition(position.x, position.y);
   Utility::text.setString(string);
   Utility::text.setFillColor(sf::Color::White);
@@ -186,6 +193,24 @@ void Utility::renderText(glm::vec2 position, std::string string) {
 }
 
 void Utility::renderText(glm::vec2 position, std::string string, sf::Color colour) {
+  Utility::text.setCharacterSize(18);
+  Utility::text.setPosition(position.x, position.y);
+  Utility::text.setString(string);
+  Utility::text.setFillColor(colour);
+  renderWindow->draw(Utility::text);
+}
+
+void Utility::renderTitleText(glm::vec2 position, std::string string) {
+  Utility::text.setCharacterSize(70);
+  Utility::text.setPosition(position.x, position.y);
+  Utility::text.setString(string);
+  Utility::text.setFillColor(sf::Color::White);
+  renderText(position, string, sf::Color::White);
+  renderWindow->draw(Utility::text);
+}
+
+void Utility::renderMenuText(glm::vec2 position, std::string string, sf::Color colour) {
+  Utility::text.setCharacterSize(40);
   Utility::text.setPosition(position.x, position.y);
   Utility::text.setString(string);
   Utility::text.setFillColor(colour);
@@ -218,4 +243,60 @@ glm::vec2 Utility::getScreenCoordinates(glm::vec3 position) {
   return glm::vec2(
     std::floor(px),
     std::floor((float)screenSize.y - py));
+}
+
+bool Utility::writeFile(std::string path, char* source, unsigned int sizeInBytes) {
+  std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
+  if(file.is_open()) {
+    file.write(source, sizeInBytes);
+    file.close();
+  } else {
+    std::cout << "error writing file: " + path << std::endl;
+    return false;
+  }
+  std::cout << "write file: " + path << std::endl;
+  return true;
+}
+
+bool Utility::readFile(std::string path, char** destination, unsigned int* sizeInBytes) {
+  std::ifstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
+  if(file.is_open()) {
+    std::streampos size = file.tellg();
+    if(sizeInBytes != nullptr) *sizeInBytes = (unsigned int)size;
+    *destination = new char[size];
+    file.seekg(0, std::ios::beg);
+    file.read(*destination, size);
+    file.close();
+  } else {
+    std::cout << "error reading file: " + path << std::endl;
+    return false;
+  }
+  std::cout << "read file: " + path << std::endl;
+  return true;
+}
+
+bool Utility::checkFile(std::string path) {
+  std::ifstream file(path, std::ios::in | std::ios::binary | std::ios::ate);
+  if(file.is_open()) {
+    file.close();
+  } else {
+    std::cout << "error reading file: " + path << std::endl;
+    return false;
+  }
+  return true;
+}
+
+char* Utility::fontData = nullptr;
+
+bool Utility::readFontFromMemoryBlock(char** memPointer) {
+  if(fontData != nullptr) {
+    font.~Font();
+    delete[] fontData;
+  }
+  unsigned int fontSize;
+  readValue(memPointer, &fontSize);
+  fontData = new char[fontSize];
+  memcpy(fontData, *memPointer, fontSize);
+  *memPointer += fontSize;
+  return font.loadFromMemory(fontData, fontSize);
 }

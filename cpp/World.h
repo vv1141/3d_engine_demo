@@ -64,17 +64,8 @@ private:
   std::list<Vehicle>                        vehicles;
   std::list<RenderObject::ModelTexturePair> modelTexturePairs;
   std::vector<RenderObject>                 renderObjects;
-  Model                                     cubeModel;
-  Model                                     hullModel;
-  Model                                     frontRightTyreModel;
-  Model                                     frontLeftTyreModel;
-  Model                                     rearRightTyreModel;
-  Model                                     rearLeftTyreModel;
-  Model                                     terrainModel;
-  Texture                                   cubeTexture;
-  Texture                                   hullTexture;
-  Texture                                   tyreTexture;
-  Texture                                   terrainTexture;
+  std::map<std::string, Model>              models;
+  std::map<std::string, Texture>            textures;
 
   Collision::Polyhedron              cubeHitbox;
   Collision::Polyhedron              wheelPolyhedron;
@@ -99,12 +90,13 @@ private:
 
   bool writeStateToFile(std::string path);
   bool readStateFromFile(std::string path);
+  bool readAssetFile(std::string path, bool readShaders);
 
 public:
   World();
   ~World();
 
-  void init(sf::RenderWindow* renderWindow, Input* input);
+  bool init(sf::RenderWindow* renderWindow, Input* input);
   void update(float dt);
   void updateCameraPosition(double alpha);
   void renderGeometry(double alpha);

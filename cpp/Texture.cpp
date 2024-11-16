@@ -4,10 +4,23 @@ int Texture::uniqueIdGenerator = 0;
 
 bool Texture::loadTexture(std::string path, GLuint* textureId, bool sRgb) {
   sf::Image image;
-  if(!image.loadFromFile(path)) {
-    return false;
+  if(image.loadFromFile(path)) {
+    initTexture(image, textureId, sRgb);
+    return true;
   }
+  return false;
+}
 
+bool Texture::loadTexture(char* source, unsigned int sizeInBytes, GLuint* textureId, bool sRgb) {
+  sf::Image image;
+  if(image.loadFromMemory(source, sizeInBytes)) {
+    initTexture(image, textureId, sRgb);
+    return true;
+  }
+  return false;
+}
+
+void Texture::initTexture(const sf::Image& image, GLuint* textureId, bool sRgb) {
   glGenTextures(1, textureId);
   glBindTexture(GL_TEXTURE_2D, *textureId);
 
@@ -24,7 +37,6 @@ bool Texture::loadTexture(std::string path, GLuint* textureId, bool sRgb) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glGenerateMipmap(GL_TEXTURE_2D);
-  return true;
 }
 
 bool Texture::create1x1GreyTexture(GLuint* textureId) {
@@ -52,6 +64,43 @@ Texture::~Texture() {
   if(textures & Flags::diffuse) glDeleteTextures(1, &diffuseMapId);
   if(textures & Flags::normal) glDeleteTextures(1, &normalMapId);
   if(textures & Flags::depth) glDeleteTextures(1, &depthMapId);
+}
+
+bool Texture::loadTextures(char** memPointer) {
+  Utility::readValue(memPointer, &(this->textures));
+
+  unsigned int size;
+  if(this->textures & Flags::diffuse) {
+    Utility::readValue(memPointer, &size);
+    if(!loadTexture(*memPointer, size, &diffuseMapId, true)) {
+      return false;
+    }
+    *memPointer += size;
+  } else {
+    create1x1GreyTexture(&diffuseMapId);
+  }
+
+  if(this->textures & Flags::normal) {
+    Utility::readValue(memPointer, &size);
+    if(!loadTexture(*memPointer, size, &normalMapId, true)) {
+      return false;
+    }
+    *memPointer += size;
+  } else {
+    create1x1NormalTexture(&normalMapId);
+  }
+
+  if(this->textures & Flags::depth) {
+    Utility::readValue(memPointer, &size);
+    if(!loadTexture(*memPointer, size, &depthMapId, true)) {
+      return false;
+    }
+    *memPointer += size;
+  } else {
+    create1x1GreyTexture(&depthMapId);
+  }
+
+  return true;
 }
 
 bool Texture::loadTextures(std::string path, int flags) {

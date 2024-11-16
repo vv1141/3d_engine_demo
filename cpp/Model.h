@@ -53,10 +53,8 @@ public:
   void         bufferData();
   void         bindBuffers();
   void         bindVertexBuffer();
-  bool         loadObj(std::string directory, std::string fileName, float scale = 1.0f, bool triangulate = false, bool averageVertexNormals = false);
-  static bool  loadCollisionMeshFromObj(std::string path, std::vector<Collision::Polyhedron>* polyhedrons, float scale = 1.0f, bool mirrorXZ = false);
-  bool         writeModelToFile(std::string path);
-  bool         readModelFromFile(std::string path);
+  static void  readCollisionMeshFromMemoryBlock(std::vector<Collision::Polyhedron>* polyhedrons, char** memPointer);
+  void         readModelFromMemoryBlock(char** memPointer);
   void         copyModel(Model* model, float scale = 1.0f);
   int          getId();
   unsigned int getIndexCount();

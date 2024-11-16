@@ -4,8 +4,10 @@
 #include <string>
 
 #include <GL/glew.h>
-#include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/OpenGL.hpp>
+
+#include "Utility.h"
 
 class Texture {
 public:
@@ -24,6 +26,8 @@ private:
   int        textures;
 
   bool loadTexture(std::string path, GLuint* textureId, bool sRgb);
+  bool loadTexture(char* source, unsigned int sizeInBytes, GLuint* textureId, bool sRgb);
+  void initTexture(const sf::Image& image, GLuint* textureId, bool sRgb);
   bool create1x1GreyTexture(GLuint* textureId);
   bool create1x1NormalTexture(GLuint* textureId);
 
@@ -31,6 +35,7 @@ public:
   Texture();
   ~Texture();
 
+  bool       loadTextures(char** memPointer);
   bool       loadTextures(std::string path, int flags = 0);
   void       bindTextures(GLuint diffuseMapSampler, GLuint normalMapSampler, GLuint depthMapSampler, int flags);
   int        getId();

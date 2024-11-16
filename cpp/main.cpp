@@ -36,14 +36,15 @@ int main() {
   }
   std::cout << "GLEW version: " << glewGetString(GLEW_VERSION) << std::endl;
 
-  Utility::initTextRendering("res/OpenSans-Regular.ttf");
   Utility::initPRNG();
 
   Input input;
   input.init();
 
   World world;
-  world.init(&renderWindow, &input);
+  if(!world.init(&renderWindow, &input)){
+    return 0;
+  }
 
   const double dt = 0.001;
 

@@ -1,8 +1,6 @@
 
 #include "World.h"
 
-#include <iostream>
-
 void World::addRenderObject(Model* model, Texture* texture, Object* object) {
   renderObjects.emplace_back(&modelTexturePairs, model, texture, object);
   RenderObject::sortRenderObjects(&renderObjects);
@@ -17,10 +15,10 @@ bool World::writeStateToFile(std::string path) {
   char*        memPointer = memBlock;
 
   for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
-    memPointer += Utility::writeValue(memPointer, it->getPosition());
-    memPointer += Utility::writeValue(memPointer, it->getOrientation());
-    memPointer += Utility::writeValue(memPointer, it->getVelocity());
-    memPointer += Utility::writeValue(memPointer, it->getAngularVelocity());
+    Utility::writeValue(&memPointer, it->getPosition());
+    Utility::writeValue(&memPointer, it->getOrientation());
+    Utility::writeValue(&memPointer, it->getVelocity());
+    Utility::writeValue(&memPointer, it->getAngularVelocity());
   }
 
   std::ofstream file(path, std::ios::out | std::ios::binary | std::ios::trunc);
@@ -53,10 +51,10 @@ bool World::readStateFromFile(std::string path) {
     glm::vec3 velocity;
     glm::vec3 angularVelocity;
     for(auto it = rigidBodies.begin(); it != rigidBodies.end(); ++it) {
-      memPointer += Utility::readValue(memPointer, &position);
-      memPointer += Utility::readValue(memPointer, &orientation);
-      memPointer += Utility::readValue(memPointer, &velocity);
-      memPointer += Utility::readValue(memPointer, &angularVelocity);
+      Utility::readValue(&memPointer, &position);
+      Utility::readValue(&memPointer, &orientation);
+      Utility::readValue(&memPointer, &velocity);
+      Utility::readValue(&memPointer, &angularVelocity);
       it->setPosition(position);
       it->setOrientation(orientation);
       it->setVelocity(velocity);
@@ -72,6 +70,46 @@ bool World::readStateFromFile(std::string path) {
   return true;
 }
 
+bool World::readAssetFile(std::string path, bool readShaders) {
+  char* memBlock;
+  if(Utility::readFile(path, &memBlock, nullptr)) {
+    char* memPointer = memBlock;
+
+    if(!Utility::readFontFromMemoryBlock(&memPointer)) {
+      delete[] memBlock;
+      return false;
+    }
+    Utility::initTextRendering();
+    std::vector<std::string> modelNames;
+    modelNames.emplace_back("cube");
+    modelNames.emplace_back("hull");
+    modelNames.emplace_back("tyre");
+    modelNames.emplace_back("terrain");
+    for(auto& name: modelNames) {
+      models[name] = Model();
+      textures[name] = Texture();
+    }
+    for(auto& name: modelNames) {
+      models[name].readModelFromMemoryBlock(&memPointer);
+      models[name].bufferData();
+      if(!textures[name].loadTextures(&memPointer)) {
+        delete[] memBlock;
+        return false;
+      }
+    }
+    Model::readCollisionMeshFromMemoryBlock(&terrainMesh, &memPointer);
+    if(readShaders) {
+      opaqueShader.loadShaders(&memPointer);
+      shadowMappingShader.loadShaders(&memPointer);
+      screenShader.loadShaders(&memPointer);
+    }
+
+    delete[] memBlock;
+    return true;
+  }
+  return false;
+}
+
 World::World() {
 }
 
@@ -79,7 +117,7 @@ World::~World() {
   glDeleteVertexArrays(1, &vertexArray);
 }
 
-void World::init(sf::RenderWindow* renderWindow, Input* input) {
+bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   this->renderWindow = renderWindow;
   this->input = input;
   Utility::initRenderState(renderWindow, &projectionViewMatrix);
@@ -96,6 +134,13 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
   multisamplingEnabled = true;
   multisamplingSampleCount = 4;
 
+  bool useAssetFileShaders = true;
+  if(!readAssetFile("res/assetdata", useAssetFileShaders)) return false;
+  if(!useAssetFileShaders) {
+    opaqueShader.loadShaders("SimpleShader.vert", "SimpleShader.frag");
+    shadowMappingShader.loadShaders("ShadowMappingShader.vert", "ShadowMappingShader.frag");
+    screenShader.loadShaders("ScreenShader.vert", "ScreenShader.frag");
+  }
   opaqueShader.setup(shadowLevelCount);
   shadowMappingShader.setup(depthMapResolution, shadowLevelCount);
   glm::ivec2 windowSize((int)renderWindow->getSize().x, (int)renderWindow->getSize().y);
@@ -116,27 +161,6 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
   float orbitCameraMinAngleVertical = -1.4f;
   float orbitCameraMaxAngleVertical = 1.4f;
 
-  if(!cubeModel.loadObj("res/cube", "cube.obj", 1.0f, true)) return;
-  cubeModel.bufferData();
-  if(!cubeTexture.loadTextures("res/cube", Texture::Flags::diffuse)) return;
-  hullModel.loadObj("res/vehicle", "vehicle.obj", 1.0f, true);
-  hullModel.bufferData();
-  if(!hullTexture.loadTextures("res/vehicle", Texture::Flags::diffuse)) return;
-  frontRightTyreModel.loadObj("res/tyre", "tyre.obj", 0.7f, true);
-  frontRightTyreModel.bufferData();
-  frontLeftTyreModel.loadObj("res/tyre", "tyre.obj", 0.7f, true);
-  frontLeftTyreModel.bufferData();
-  rearRightTyreModel.copyModel(&frontRightTyreModel);
-  rearRightTyreModel.bufferData();
-  rearLeftTyreModel.copyModel(&frontLeftTyreModel);
-  rearLeftTyreModel.bufferData();
-  tyreTexture.loadTextures("res/tyre", Texture::Flags::diffuse);
-
-  if(!terrainModel.loadObj("res/terrain", "terrain.obj", 1.0f, false, true)) return;
-  terrainModel.bufferData();
-  if(!terrainTexture.loadTextures("res/terrain", Texture::Flags::diffuse | Texture::Flags::normal)) return;
-  Model::loadCollisionMeshFromObj("res/terrain/terrain.obj", &terrainMesh, 1.0f);
-
   float collisionBoxLength = 2;
   Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 0.5f));
   const glm::vec3 boxSize(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 1.5f);
@@ -149,7 +173,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
   rigidBodies.back().setStatic();
   rigidBodies.back().setPosition(glm::vec3(0, 0, 0));
   rigidBodies.back().getGeometry()->transformToWorldSpace(rigidBodies.back().getModelMatrix());
-  addRenderObject(&terrainModel, &terrainTexture, rigidBodies.back().getObject());
+  addRenderObject(&(models["terrain"]), &(textures["terrain"]), rigidBodies.back().getObject());
 
   for(int i = 0; i < 2; i++) {
     for(int j = 0; j < 2; j++) {
@@ -160,7 +184,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
         Utility::randomDouble(0, 10) + 10,
         Utility::randomDouble(0, 10)));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&cubeModel, &cubeTexture, rigidBodies.back().getObject());
+      addRenderObject(&(models["cube"]), &(textures["cube"]), rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
@@ -177,7 +201,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
       rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
       rigidBodies.back().setPosition(glm::vec3(-4, 5 + (i * 6) + j * 3, 2));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&cubeModel, &cubeTexture, rigidBodies.back().getObject());
+      addRenderObject(&(models["cube"]), &(textures["cube"]), rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
@@ -207,11 +231,11 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
   vehicles.back().setup(&vehicleType, &rigidBodies, &collisionPairs, &constraints, glm::length(gravity));
   vehicles.back().setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
   vehicles.back().setOrientationFromDirection(glm::vec3(0.0f, 0.0f, 1.0f));
-  addRenderObject(&hullModel, &hullTexture, vehicles.back().getHull()->getObject());
-  addRenderObject(&frontRightTyreModel, &tyreTexture, vehicles.back().getTyre(0)->getObject());
-  addRenderObject(&rearRightTyreModel, &tyreTexture, vehicles.back().getTyre(1)->getObject());
-  addRenderObject(&frontLeftTyreModel, &tyreTexture, vehicles.back().getTyre(2)->getObject());
-  addRenderObject(&rearLeftTyreModel, &tyreTexture, vehicles.back().getTyre(3)->getObject());
+  addRenderObject(&(models["hull"]), &(textures["hull"]), vehicles.back().getHull()->getObject());
+  addRenderObject(&(models["tyre"]), &(textures["tyre"]), vehicles.back().getTyre(0)->getObject());
+  addRenderObject(&(models["tyre"]), &(textures["tyre"]), vehicles.back().getTyre(1)->getObject());
+  addRenderObject(&(models["tyre"]), &(textures["tyre"]), vehicles.back().getTyre(2)->getObject());
+  addRenderObject(&(models["tyre"]), &(textures["tyre"]), vehicles.back().getTyre(3)->getObject());
 
   CollisionPair::checkMeshCollisionPairMaxOverlapValidity(&collisionPairs);
 
@@ -226,6 +250,7 @@ void World::init(sf::RenderWindow* renderWindow, Input* input) {
 
   camera.setupVehicleCamera(localPlayer->getControlledVehicle(), vehicleCameraDistance, vehicleCameraHeight, vehicleCameraAngle);
   camera.setupOrbitCamera(localPlayer->getFollowedObject(), orbitCameraInitialDistance, orbitCameraMinDistance, orbitCameraMaxDistance, orbitCameraMinAngleVertical, orbitCameraMaxAngleVertical);
+  return true;
 }
 
 void World::update(float dt) {

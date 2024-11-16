@@ -2,20 +2,20 @@
 #include "Polygon.h"
 #include "Debug.h"
 
-int Polygon::uniqueIdGenerator = 0;
+int Polygon2::uniqueIdGenerator = 0;
 
-Polygon::Polygon() {
+Polygon2::Polygon2() {
   id = uniqueIdGenerator;
   uniqueIdGenerator++;
 }
 
-Polygon::~Polygon() {
+Polygon2::~Polygon2() {
   glDeleteBuffers(1, &vertexBuffer);
   if(useUvs) glDeleteBuffers(1, &uvBuffer);
   glDeleteBuffers(1, &indexBuffer);
 }
 
-void Polygon::bufferData() {
+void Polygon2::bufferData() {
   glGenBuffers(1, &vertexBuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * vertices.size(), &vertices[0], usage);
@@ -29,7 +29,7 @@ void Polygon::bufferData() {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices.size(), &indices[0], usage);
 }
 
-void Polygon::bindBuffers() {
+void Polygon2::bindBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
   glVertexAttribPointer(
     0,
@@ -51,7 +51,7 @@ void Polygon::bindBuffers() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 }
 
-void Polygon::setupScreenQuad(bool useUvs) {
+void Polygon2::setupScreenQuad(bool useUvs) {
   this->useUvs = useUvs;
   usage = GL_STATIC_DRAW;
   vertices = std::vector<glm::vec2>{glm::vec2(-1.0f, 1.0f), glm::vec2(-1.0f, -1.0f), glm::vec2(1.0f, -1.0f), glm::vec2(1.0f, 1.0f)};
@@ -60,10 +60,10 @@ void Polygon::setupScreenQuad(bool useUvs) {
   bufferData();
 }
 
-int Polygon::getId() {
+int Polygon2::getId() {
   return id;
 }
 
-unsigned int Polygon::getIndexCount() {
+unsigned int Polygon2::getIndexCount() {
   return indices.size();
 }
