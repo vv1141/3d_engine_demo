@@ -42,7 +42,7 @@ int main() {
   input.init();
 
   World world;
-  if(!world.init(&renderWindow, &input)){
+  if(!world.init(&renderWindow, &input)) {
     return 0;
   }
 

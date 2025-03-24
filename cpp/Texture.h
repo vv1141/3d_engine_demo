@@ -4,8 +4,8 @@
 #include <string>
 
 #include <GL/glew.h>
-#include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "Utility.h"
 

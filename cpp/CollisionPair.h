@@ -19,15 +19,15 @@ public:
     RigidBody*                 B;
     bool                       orderFlipped;
     int                        getSortIdentifier() const {
-      // depriorise car hull ground contacts
+                             // depriorise car hull ground contacts
       if((A->getIdentifier() == RigidBody::Identifier::hull && B->getIdentifier() == RigidBody::Identifier::ground) ||
          (A->getIdentifier() == RigidBody::Identifier::ground && B->getIdentifier() == RigidBody::Identifier::hull)) {
-        return std::numeric_limits<int>::max();
+                               return std::numeric_limits<int>::max();
       }
       glm::vec3 averagePoint = glm::vec3(0.0f, 0.0f, 0.0f);
       for(int i = 0; i < contactManifold.points.size(); i++) {
-        glm::vec3 p = contactManifold.points[i].position;
-        averagePoint += p;
+                               glm::vec3 p = contactManifold.points[i].position;
+                               averagePoint += p;
       }
       averagePoint *= (1.0f / (float)contactManifold.points.size());
       return glm::dot(averagePoint, sortDirection);

@@ -165,8 +165,8 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   float collisionBoxHeight = 1.16f;
   float collisionBoxWidth = 1.6f;
   Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxWidth * 0.5f, collisionBoxHeight * 0.5f, collisionBoxLength * 0.5f));
-  const float     mass = 100.0f;
-  const float     cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxLength * collisionBoxLength;
+  const float mass = 100.0f;
+  const float cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxLength * collisionBoxLength;
 
   rigidBodies.emplace_back();
   rigidBodies.back().setGeometryMesh(24, &terrainMesh);

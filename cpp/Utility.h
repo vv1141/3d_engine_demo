@@ -2,8 +2,8 @@
 #define UTILITY_H
 
 #include <GL/glew.h>
-#include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
+#include <SFML/Graphics.hpp>
 #include <glm/glm.hpp>
 
 #include <cstring>

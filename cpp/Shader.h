@@ -104,11 +104,11 @@ public:
   GLuint screenTextureSampler;
 
   Polygon2 screenQuad;
-  GLuint  framebuffer;
-  GLuint  texture;
-  GLuint  renderbuffer;
-  GLuint  intermediateFramebuffer;
-  GLuint  intermediateTexture;
+  GLuint   framebuffer;
+  GLuint   texture;
+  GLuint   renderbuffer;
+  GLuint   intermediateFramebuffer;
+  GLuint   intermediateTexture;
 
   ScreenShader();
   ~ScreenShader();

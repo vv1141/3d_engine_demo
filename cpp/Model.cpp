@@ -1,6 +1,6 @@
 
-#include "Debug.h"
 #include "Model.h"
+#include "Debug.h"
 
 int Model::uniqueIdGenerator = 0;
 
@@ -181,10 +181,10 @@ void Model::bindVertexBuffer() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 }
 
-void Model::readCollisionMeshFromMemoryBlock(std::vector<Collision::Polyhedron>* polyhedrons, char** memPointer){
+void Model::readCollisionMeshFromMemoryBlock(std::vector<Collision::Polyhedron>* polyhedrons, char** memPointer) {
   unsigned int size;
   Utility::readValue(memPointer, &size);
-  for(unsigned int i = 0; i < size; i++){
+  for(unsigned int i = 0; i < size; i++) {
     std::vector<glm::vec3> faceVerticeVector;
     Utility::readVector(memPointer, &faceVerticeVector);
     glm::vec3 faceNormal = Utility::getTriangleNormal(&faceVerticeVector);
