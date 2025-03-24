@@ -48,13 +48,13 @@ void Vehicle::applyCounterRotationAngularImpulseToTyre(RigidBody* tyre, float im
 
 Vehicle::Vehicle() {
   steeringAngle = 0.0f;
-  drivingImpulse = 6.0f * vehicleType->hullMass;
+  drivingImpulse = 30.0f * vehicleType->hullMass;
   brakingImpulse = 2.0f * vehicleType->hullMass;
   steeringSpeed = 0.5f * Utility::tau;
   steeringLimit = 0.5f;
   rollingResistance = 0.05f;
   internalRollingFriction = 0.01f;
-  tyreMaxAngularVelocity = 10.0f;
+  tyreMaxAngularVelocity = 30.0f;
 }
 Vehicle::~Vehicle() {
 }

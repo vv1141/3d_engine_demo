@@ -154,7 +154,7 @@ void OpaqueShader::render(const sf::RenderWindow*                     renderWind
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LESS);
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(0.8f, 0.6f, 0.3f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   Light::setupLights(*directionalLights,

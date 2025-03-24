@@ -81,8 +81,8 @@ bool World::readAssetFile(std::string path, bool readShaders) {
     }
     Utility::initTextRendering();
     std::vector<std::string> modelNames;
-    modelNames.emplace_back("cube");
     modelNames.emplace_back("hull");
+    modelNames.emplace_back("hull2");
     modelNames.emplace_back("tyre");
     modelNames.emplace_back("terrain");
     for(auto& name: modelNames) {
@@ -130,7 +130,7 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   zBias = 5.0f;
   fov = 70.0f;
   nearClippingPlane = 0.1f;
-  farClippingPlane = 75.0f;
+  farClippingPlane = 175.0f;
   multisamplingEnabled = true;
   multisamplingSampleCount = 4;
 
@@ -161,9 +161,10 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   float orbitCameraMinAngleVertical = -1.4f;
   float orbitCameraMaxAngleVertical = 1.4f;
 
-  float collisionBoxLength = 2;
-  Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 0.5f));
-  const glm::vec3 boxSize(collisionBoxLength * 0.5f, collisionBoxLength * 0.5f, collisionBoxLength * 1.5f);
+  float collisionBoxLength = 3.8f;
+  float collisionBoxHeight = 1.16f;
+  float collisionBoxWidth = 1.6f;
+  Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxWidth * 0.5f, collisionBoxHeight * 0.5f, collisionBoxLength * 0.5f));
   const float     mass = 100.0f;
   const float     cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxLength * collisionBoxLength;
 
@@ -184,7 +185,7 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
         Utility::randomDouble(0, 10) + 10,
         Utility::randomDouble(0, 10)));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&(models["cube"]), &(textures["cube"]), rigidBodies.back().getObject());
+      addRenderObject(&(models["hull2"]), &(textures["hull2"]), rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
@@ -201,7 +202,7 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
       rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
       rigidBodies.back().setPosition(glm::vec3(-4, 5 + (i * 6) + j * 3, 2));
       rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&(models["cube"]), &(textures["cube"]), rigidBodies.back().getObject());
+      addRenderObject(&(models["hull2"]), &(textures["hull2"]), rigidBodies.back().getObject());
       cubePointer = &rigidBodies.back();
       auto end = rigidBodies.end();
       std::advance(end, -1);
@@ -213,19 +214,19 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   }
 
   vehicleType.setup(
-    3.3368f,
-    1.30f,
-    2.04f,
+    3.8f,
+    0.16f,
+    1.6f,
     0.0f,
-    0.0f,
-    0.49f,
-    0.5f,
-    -0.77f,
-    0.75f,
-    -0.7f,
-    -0.7f,
-    1.7652f,
-    1.7400f);
+    1.0f, //hitbox offset
+    0.325f,
+    0.2f,
+    -1.30997f,
+    1.30997f,
+    -0.557341f,
+    -0.557341f,
+    1.4f,
+    1.4f);
 
   vehicles.emplace_back();
   vehicles.back().setup(&vehicleType, &rigidBodies, &collisionPairs, &constraints, glm::length(gravity));
