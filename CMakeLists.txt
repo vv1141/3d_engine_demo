@@ -71,6 +71,13 @@ endif()
 # ---------------------------------------------------------------------------------------------------
 
 add_custom_target(
+  copy-shaders ALL
+  COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/glsl ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/glsl
+  DEPENDS ${EXECUTABLE_NAME}
+  COMMENT "copying shaders" VERBATIM
+)
+
+add_custom_target(
   copy-resources ALL
   COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/res ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/res
   DEPENDS ${EXECUTABLE_NAME}
