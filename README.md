@@ -2,7 +2,7 @@
 
 ![](https://github.com/vv1141/3d_engine_demo/blob/master/screenshots/demo.gif)
 
-3D Engine Demo is a custom 3D physics and graphics engine with a simple testbed attached. It is mostly written as a side effect of learning about techniques to simulate physics for game development purposes, and as such is neither a finished library nor optimised for performance.
+3D Engine Demo is a custom 3D physics and graphics engine with a simple testbed attached. It is mostly written as a side effect of learning graphics programming and techniques to simulate physics for game development purposes, and as such is neither a finished library nor optimised for performance.
 
 ## Features
 
@@ -22,6 +22,7 @@
 * Cascaded shadow maps
 * Multisample anti-aliasing
 * Gamma correction
+* Depth of field
 
 ## Pre-built binaries
 
@@ -61,4 +62,3 @@ cd bin
 ![](https://github.com/vv1141/3d_engine_demo/blob/master/screenshots/00.png)
 ![](https://github.com/vv1141/3d_engine_demo/blob/master/screenshots/01.png)
 ![](https://github.com/vv1141/3d_engine_demo/blob/master/screenshots/02.png)
-![](https://github.com/vv1141/3d_engine_demo/blob/master/screenshots/03.png)
