@@ -42,6 +42,7 @@ private:
   float farClippingPlane;
   bool  multisamplingEnabled;
   int   multisamplingSampleCount;
+  bool  depthOfFieldEnabled;
 
   sf::RenderWindow* renderWindow;
   Input*            input;
@@ -55,6 +56,8 @@ private:
   OpaqueShader        opaqueShader;
   ShadowMappingShader shadowMappingShader;
   ScreenShader        screenShader;
+  BoxBlurShader       boxBlurShader;
+  DilationShader      dilationShader;
 
   std::list<Player>                         players;
   Player*                                   localPlayer;
@@ -99,7 +102,7 @@ public:
   bool init(sf::RenderWindow* renderWindow, Input* input);
   void update(float dt);
   void updateCameraPosition(double alpha);
-  void renderGeometry(double alpha);
+  int  renderGeometry(double alpha);
   void renderUi(int fps);
 };
 

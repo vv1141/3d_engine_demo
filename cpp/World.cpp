@@ -1,4 +1,3 @@
-
 #include "World.h"
 
 void World::addRenderObject(Model* model, Texture* texture, Object* object) {
@@ -82,8 +81,8 @@ bool World::readAssetFile(std::string path, bool readShaders) {
     Utility::initTextRendering();
     std::vector<std::string> modelNames;
     modelNames.emplace_back("hull");
-    modelNames.emplace_back("hull2");
     modelNames.emplace_back("tyre");
+    modelNames.emplace_back("cube");
     modelNames.emplace_back("terrain");
     for(auto& name: modelNames) {
       models[name] = Model();
@@ -102,6 +101,8 @@ bool World::readAssetFile(std::string path, bool readShaders) {
       opaqueShader.loadShaders(&memPointer);
       shadowMappingShader.loadShaders(&memPointer);
       screenShader.loadShaders(&memPointer);
+      boxBlurShader.loadShaders(&memPointer);
+      dilationShader.loadShaders(&memPointer);
     }
 
     delete[] memBlock;
@@ -133,6 +134,7 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   farClippingPlane = 175.0f;
   multisamplingEnabled = true;
   multisamplingSampleCount = 4;
+  depthOfFieldEnabled = true;
 
   bool useAssetFileShaders = true;
   if(!readAssetFile("res/assetdata", useAssetFileShaders)) return false;
@@ -140,11 +142,15 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
     opaqueShader.loadShaders("SimpleShader.vert", "SimpleShader.frag");
     shadowMappingShader.loadShaders("ShadowMappingShader.vert", "ShadowMappingShader.frag");
     screenShader.loadShaders("ScreenShader.vert", "ScreenShader.frag");
+    boxBlurShader.loadShaders("BoxBlurShader.vert", "BoxBlurShader.frag");
+    dilationShader.loadShaders("DilationShader.vert", "DilationShader.frag");
   }
   opaqueShader.setup(shadowLevelCount);
   shadowMappingShader.setup(depthMapResolution, shadowLevelCount);
   glm::ivec2 windowSize((int)renderWindow->getSize().x, (int)renderWindow->getSize().y);
   screenShader.setup(windowSize, multisamplingEnabled, multisamplingSampleCount);
+  boxBlurShader.setup(windowSize);
+  dilationShader.setup(windowSize);
 
   isPaused = false;
   showControls = true;
@@ -161,55 +167,31 @@ bool World::init(sf::RenderWindow* renderWindow, Input* input) {
   float orbitCameraMinAngleVertical = -1.4f;
   float orbitCameraMaxAngleVertical = 1.4f;
 
-  float collisionBoxLength = 3.8f;
-  float collisionBoxHeight = 1.16f;
-  float collisionBoxWidth = 1.6f;
-  Collision::constructHitbox(&cubeHitbox, glm::vec3(collisionBoxWidth * 0.5f, collisionBoxHeight * 0.5f, collisionBoxLength * 0.5f));
+  float collisionBoxWidth = 2.0f;
+  Collision::constructHitbox(&cubeHitbox, 0.5f * glm::vec3(collisionBoxWidth));
   const float mass = 100.0f;
-  const float cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxLength * collisionBoxLength;
+  const float cubeRotationalInertia = 1.0f / 6.0f * mass * collisionBoxWidth * collisionBoxWidth;
 
   rigidBodies.emplace_back();
-  rigidBodies.back().setGeometryMesh(24, &terrainMesh);
+  rigidBodies.back().setGeometryMesh(50, &terrainMesh);
   rigidBodies.back().setIdentifier(RigidBody::Identifier::ground);
   rigidBodies.back().setStatic();
   rigidBodies.back().setPosition(glm::vec3(0, 0, 0));
   rigidBodies.back().getGeometry()->transformToWorldSpace(rigidBodies.back().getModelMatrix());
   addRenderObject(&(models["terrain"]), &(textures["terrain"]), rigidBodies.back().getObject());
 
-  for(int i = 0; i < 2; i++) {
-    for(int j = 0; j < 2; j++) {
-      rigidBodies.emplace_back();
-      rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
-      rigidBodies.back().setPosition(glm::vec3(
-        Utility::randomDouble(0, 10),
-        Utility::randomDouble(0, 10) + 10,
-        Utility::randomDouble(0, 10)));
-      rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&(models["hull2"]), &(textures["hull2"]), rigidBodies.back().getObject());
-      cubePointer = &rigidBodies.back();
-      auto end = rigidBodies.end();
-      std::advance(end, -1);
-      for(auto it = rigidBodies.begin(); it != end; ++it) {
-        RigidBody* other = &(*it);
-        collisionPairs.emplace_back(cubePointer, other);
-      }
-    }
-  }
-  for(int i = 0; i < 2; i++) {
-    for(int j = 0; j < 2; j++) {
-      float r = Utility::randomDouble(0.5, 0.5);
-      rigidBodies.emplace_back();
-      rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
-      rigidBodies.back().setPosition(glm::vec3(-4, 5 + (i * 6) + j * 3, 2));
-      rigidBodies.back().setGeometryBox(&cubeHitbox);
-      addRenderObject(&(models["hull2"]), &(textures["hull2"]), rigidBodies.back().getObject());
-      cubePointer = &rigidBodies.back();
-      auto end = rigidBodies.end();
-      std::advance(end, -1);
-      for(auto it = rigidBodies.begin(); it != end; ++it) {
-        RigidBody* other = &(*it);
-        collisionPairs.emplace_back(cubePointer, other);
-      }
+  for(int i = 0; i < 10; i++) {
+    rigidBodies.emplace_back();
+    rigidBodies.back().setMassAndInertiaTensor(mass, glm::mat3(cubeRotationalInertia));
+    rigidBodies.back().setPosition(glm::vec3(2.0f, i * 2 + 0.1f, 2.0f));
+    rigidBodies.back().setGeometryBox(&cubeHitbox);
+    addRenderObject(&(models["cube"]), &(textures["cube"]), rigidBodies.back().getObject());
+    cubePointer = &rigidBodies.back();
+    auto end = rigidBodies.end();
+    std::advance(end, -1);
+    for(auto it = rigidBodies.begin(); it != end; ++it) {
+      RigidBody* other = &(*it);
+      collisionPairs.emplace_back(cubePointer, other);
     }
   }
 
@@ -364,7 +346,7 @@ void World::updateCameraPosition(double alpha) {
   camera.updatePosition(alpha, isPaused);
 }
 
-void World::renderGeometry(double alpha) {
+int World::renderGeometry(double alpha) {
   renderWindow->setActive(true);
 
   glBindVertexArray(vertexArray);
@@ -416,7 +398,9 @@ void World::renderGeometry(double alpha) {
   }
 
   opaqueShader.render(renderWindow,
+                      multisamplingEnabled,
                       screenShader.framebuffer,
+                      screenShader.intermediateFramebuffer,
                       &directionalLights,
                       &pointLights,
                       view,
@@ -427,7 +411,31 @@ void World::renderGeometry(double alpha) {
                       depthViewProjections,
                       clippingPlanes);
 
-  screenShader.render(renderWindow, true);
+  glm::vec2 depthOfFieldBlurRange = glm::vec2(0.0f);
+  float     focusDistance = 0.0f;
+  if(depthOfFieldEnabled) {
+    GLuint colourTexture = multisamplingEnabled ? screenShader.intermediateTexture : screenShader.texture;
+    boxBlurShader.render(colourTexture, dilationShader.blurFramebuffer, dilationShader.attachment, 3);
+    dilationShader.render();
+    const float apertureSize = 5.0f;
+    depthOfFieldBlurRange = glm::vec2(apertureSize, apertureSize * 1.1f);
+    focusDistance = glm::length(camera.getPosition() - localPlayer->getFollowedObject()->getPosition());
+  }
+
+  screenShader.render(
+    renderWindow,
+    dilationShader.texture,
+    depthOfFieldBlurRange,
+    focusDistance,
+    depthOfFieldEnabled,
+    nearClippingPlane,
+    farClippingPlane);
+
+  int err = glGetError();
+  if(err != 0) {
+    return err;
+  }
+  return 0;
 }
 
 void World::renderUi(int fps) {

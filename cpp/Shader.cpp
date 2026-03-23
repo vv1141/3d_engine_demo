@@ -1,4 +1,3 @@
-
 #include "Shader.h"
 
 Shader::Shader() {
@@ -98,6 +97,26 @@ GLuint Shader::createShaders() {
   return programId;
 }
 
+void Shader::setupTexture(GLuint* texture, GLint internalFormat, GLenum format, GLenum type, GLenum colourAttachment, glm::ivec2 windowSize) {
+  glGenTextures(1, texture);
+  glBindTexture(GL_TEXTURE_2D, *texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, windowSize.x, windowSize.y, 0, format, type, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, colourAttachment, GL_TEXTURE_2D, *texture, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Shader::setupMultisampledTexture(GLuint* texture, GLint internalFormat, int multisamplingSampleCount, GLenum colourAttachment, glm::ivec2 windowSize) {
+  glGenTextures(1, texture);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *texture);
+  glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, multisamplingSampleCount, internalFormat, windowSize.x, windowSize.y, GL_TRUE);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, colourAttachment, GL_TEXTURE_2D_MULTISAMPLE, *texture, 0);
+  glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+}
+
 OpaqueShader::OpaqueShader() {
 }
 OpaqueShader::~OpaqueShader() {
@@ -136,7 +155,9 @@ bool OpaqueShader::setup(int shadowLevelCount) {
 }
 
 void OpaqueShader::render(const sf::RenderWindow*                     renderWindow,
+                          bool                                        multisamplingEnabled,
                           GLuint                                      framebuffer,
+                          GLuint                                      blitFramebuffer,
                           const std::vector<Light::DirectionalLight>* directionalLights,
                           const std::vector<Light::PointLight>*       pointLights,
                           glm::mat4                                   view,
@@ -213,6 +234,12 @@ void OpaqueShader::render(const sf::RenderWindow*                     renderWind
   glDisableVertexAttribArray(2);
   glDisableVertexAttribArray(3);
   glDisableVertexAttribArray(4);
+
+  if(multisamplingEnabled) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, blitFramebuffer);
+    glBlitFramebuffer(0, 0, renderWindow->getSize().x, renderWindow->getSize().y, 0, 0, renderWindow->getSize().x, renderWindow->getSize().y, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+  }
 }
 
 bool ShadowMappingShader::generateBuffers(int depthMapResolution, int shadowLevelCount) {
@@ -383,6 +410,140 @@ void ShadowMappingShader::render(const std::vector<RenderObject>* renderObjects,
   glDisableVertexAttribArray(0);
 }
 
+bool DilationShader::generateBuffers(glm::ivec2 windowSize) {
+  glGenFramebuffers(1, &framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  attachment = GL_COLOR_ATTACHMENT0;
+  setupTexture(&texture, GL_RGBA16F, GL_RGBA, GL_FLOAT, attachment, windowSize);
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    Debug::log("Error: DilationShader: framebuffer is not complete");
+    return false;
+  }
+  glGenFramebuffers(1, &blurFramebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, blurFramebuffer);
+  setupTexture(&blurTexture, GL_RGBA16F, GL_RGBA, GL_FLOAT, attachment, windowSize);
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    Debug::log("Error: DilationShader: blurFramebuffer is not complete");
+    return false;
+  }
+  return true;
+}
+
+DilationShader::DilationShader() {
+}
+DilationShader::~DilationShader() {
+  glDeleteTextures(1, &texture);
+  glDeleteFramebuffers(1, &framebuffer);
+  glDeleteTextures(1, &blurTexture);
+  glDeleteFramebuffers(1, &blurFramebuffer);
+}
+
+bool DilationShader::setup(glm::ivec2 windowSize) {
+  programId = createShaders();
+  if(!programId) return false;
+  glUseProgram(programId);
+  textureSampler = glGetUniformLocation(programId, "textureSampler");
+  sizeId = glGetUniformLocation(programId, "size");
+  separationId = glGetUniformLocation(programId, "separation");
+  quad.setupScreenQuad(true);
+  return generateBuffers(windowSize);
+}
+
+void DilationShader::bind(GLuint t) {
+  quad.bindBuffers();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, t);
+  glUniform1i(textureSampler, 0);
+}
+
+void DilationShader::render() {
+  const int   size = 5;
+  const float separation = 1.0f;
+  glUseProgram(programId);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glUniform1i(sizeId, size);
+  glUniform1f(separationId, separation);
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glDrawBuffer(attachment);
+  bind(blurTexture);
+  glDrawElements(GL_TRIANGLES, quad.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+}
+
+bool BoxBlurShader::generateBuffers(glm::ivec2 windowSize) {
+  glGenFramebuffers(2, framebuffers);
+  glGenTextures(2, textures);
+  for(int i = 0; i < 2; i++) {
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[i]);
+    glBindTexture(GL_TEXTURE_2D, textures[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, windowSize.x, windowSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures[i], 0);
+  }
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    Debug::log("Error: BoxBlurShader: framebuffer is not complete");
+    return false;
+  }
+  return true;
+}
+
+BoxBlurShader::BoxBlurShader() {
+}
+BoxBlurShader::~BoxBlurShader() {
+  glDeleteTextures(2, textures);
+  glDeleteFramebuffers(2, framebuffers);
+}
+
+bool BoxBlurShader::setup(glm::ivec2 windowSize) {
+  programId = createShaders();
+  if(!programId) return false;
+  glUseProgram(programId);
+  textureSampler = glGetUniformLocation(programId, "textureSampler");
+  quad.setupScreenQuad(true);
+  return generateBuffers(windowSize);
+}
+
+void BoxBlurShader::bind(GLuint t) {
+  quad.bindBuffers();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, t);
+  glUniform1i(textureSampler, 0);
+}
+
+void BoxBlurShader::render(GLuint sourceTexture, GLuint targetFramebuffer, GLenum attachment, int iterations) {
+  glUseProgram(programId);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  for(int i = 0; i < iterations; i++) {
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[0]);
+    if(i == 0) {
+      bind(sourceTexture);
+    } else {
+      bind(textures[1]);
+    }
+    glDrawElements(GL_TRIANGLES, quad.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+    if(i == iterations - 1) {
+      glBindFramebuffer(GL_FRAMEBUFFER, targetFramebuffer);
+      glDrawBuffer(attachment);
+    } else {
+      glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[1]);
+    }
+    bind(textures[0]);
+    glDrawElements(GL_TRIANGLES, quad.getIndexCount(), GL_UNSIGNED_INT, (void*)0);
+  }
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+}
+
 bool ScreenShader::generateBuffers(glm::ivec2 windowSize, bool multisamplingEnabled, int multisamplingSampleCount) {
   if(multisamplingEnabled) {
     glGenFramebuffers(1, &framebuffer);
@@ -394,11 +555,13 @@ bool ScreenShader::generateBuffers(glm::ivec2 windowSize, bool multisamplingEnab
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texture, 0);
     GLenum DrawBuffers[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, DrawBuffers);
+
     glGenRenderbuffers(1, &renderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisamplingSampleCount, GL_DEPTH24_STENCIL8, windowSize.x, windowSize.y);
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisamplingSampleCount, GL_DEPTH_COMPONENT32F, windowSize.x, windowSize.y);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
       Debug::log("Error: ScreenShader: MSAA framebuffer is not complete");
       return false;
@@ -411,6 +574,9 @@ bool ScreenShader::generateBuffers(glm::ivec2 windowSize, bool multisamplingEnab
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, intermediateTexture, 0);
+
+    setupTexture(&depthbuffer, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT, windowSize);
+
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
       Debug::log("Error: ScreenShader: Post-processing framebuffer is not complete");
       return false;
@@ -426,11 +592,9 @@ bool ScreenShader::generateBuffers(glm::ivec2 windowSize, bool multisamplingEnab
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
     GLenum DrawBuffers[] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1, DrawBuffers);
-    glGenRenderbuffers(1, &renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowSize.x, windowSize.y);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, renderbuffer);
+
+    setupTexture(&depthbuffer, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT, windowSize);
+
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
       Debug::log("Error: ScreenShader: Framebuffer is not complete");
       return false;
@@ -443,15 +607,26 @@ ScreenShader::ScreenShader() {
 }
 ScreenShader::~ScreenShader() {
   glDeleteTextures(1, &texture);
-  glDeleteRenderbuffers(1, &renderbuffer);
+  glDeleteTextures(1, &depthbuffer);
   glDeleteFramebuffers(1, &framebuffer);
+  if(multisamplingEnabled) {
+    glDeleteRenderbuffers(1, &renderbuffer);
+    glDeleteTextures(1, &intermediateTexture);
+    glDeleteFramebuffers(1, &intermediateFramebuffer);
+  }
 }
 
 bool ScreenShader::setup(glm::ivec2 windowSize, bool multisamplingEnabled, int multisamplingSampleCount) {
+  this->multisamplingEnabled = multisamplingEnabled;
   programId = createShaders();
   if(!programId) return false;
   glUseProgram(programId);
   screenTextureSampler = glGetUniformLocation(programId, "screenTextureSampler");
+  depthOfFieldEnabledId = glGetUniformLocation(programId, "depthOfFieldEnabled");
+  outOfFocusTextureSampler = glGetUniformLocation(programId, "outOfFocusTextureSampler");
+  positionTextureSampler = glGetUniformLocation(programId, "positionTextureSampler");
+  minMaxFocusId = glGetUniformLocation(programId, "minMaxFocus");
+  nearFarId = glGetUniformLocation(programId, "nearFar");
   screenQuad.setupScreenQuad(true);
   return generateBuffers(windowSize, multisamplingEnabled, multisamplingSampleCount);
 }
@@ -463,16 +638,17 @@ void ScreenShader::bind(GLuint t) {
   glUniform1i(screenTextureSampler, 0);
 }
 
-void ScreenShader::render(const sf::RenderWindow* renderWindow, bool multisamplingEnabled) {
+void ScreenShader::render(const sf::RenderWindow* renderWindow,
+                          GLuint                  outOfFocusTexture,
+                          glm::vec2               depthOfFieldGradualBlurRange,
+                          float                   focusDistance,
+                          bool                    depthOfFieldEnabled,
+                          float                   near,
+                          float                   far) {
   glUseProgram(programId);
   glEnable(GL_MULTISAMPLE);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  if(multisamplingEnabled) {
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFramebuffer);
-    glBlitFramebuffer(0, 0, renderWindow->getSize().x, renderWindow->getSize().y, 0, 0, renderWindow->getSize().x, renderWindow->getSize().y, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-  }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -481,6 +657,17 @@ void ScreenShader::render(const sf::RenderWindow* renderWindow, bool multisampli
     bind(this->intermediateTexture);
   } else {
     bind(this->texture);
+  }
+  glUniform1i(depthOfFieldEnabledId, depthOfFieldEnabled);
+  if(depthOfFieldEnabled) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, outOfFocusTexture);
+    glUniform1i(outOfFocusTextureSampler, 1);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, depthbuffer);
+    glUniform1i(positionTextureSampler, 2);
+    glUniform3f(minMaxFocusId, depthOfFieldGradualBlurRange.x, depthOfFieldGradualBlurRange.y, focusDistance);
+    glUniform2f(nearFarId, near, far);
   }
   draw();
   glDisableVertexAttribArray(0);

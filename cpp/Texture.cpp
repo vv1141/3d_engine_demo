@@ -68,6 +68,8 @@ Texture::~Texture() {
 
 bool Texture::loadTextures(char** memPointer) {
   Utility::readValue(memPointer, &(this->textures));
+  bool useAnisotropicFiltering = false;
+  Utility::readValue(memPointer, &(useAnisotropicFiltering));
 
   unsigned int size;
   if(this->textures & Flags::diffuse) {

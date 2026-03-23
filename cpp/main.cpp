@@ -94,7 +94,10 @@ int main() {
     const float alpha = accumulator / dt;
 
     world.updateCameraPosition(alpha);
-    world.renderGeometry(alpha);
+    int err = world.renderGeometry(alpha);
+    if(err != 0) {
+      return err;
+    }
     world.renderUi(fps);
     renderWindow.display();
   }

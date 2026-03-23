@@ -25,6 +25,8 @@ public:
   void        loadShaders(char** memPointer);
   void        compileShader(GLuint id, std::string code);
   GLuint      createShaders();
+  void        setupTexture(GLuint* texture, GLint internalFormat, GLenum format, GLenum type, GLenum colourAttachment, glm::ivec2 windowSize);
+  void        setupMultisampledTexture(GLuint* texture, GLint internalFormat, int multisamplingSampleCount, GLenum colourAttachment, glm::ivec2 windowSize);
 };
 
 class OpaqueShader: public Shader {
@@ -56,7 +58,9 @@ public:
 
   bool setup(int shadowLevelCount);
   void render(const sf::RenderWindow*                     renderWindow,
+              bool                                        multisamplingEnabled,
               GLuint                                      framebuffer,
+              GLuint                                      blitFramebuffer,
               const std::vector<Light::DirectionalLight>* directionalLights,
               const std::vector<Light::PointLight>*       pointLights,
               glm::mat4                                   view,
@@ -96,26 +100,84 @@ public:
                                 std::vector<glm::mat4>           depthViewProjections);
 };
 
+class DilationShader: public Shader {
+private:
+  bool generateBuffers(glm::ivec2 windowSize);
+
+public:
+  GLuint textureSampler;
+  GLuint sizeId;
+  GLuint separationId;
+
+  Polygon2 quad;
+  GLuint   framebuffer;
+  GLuint   texture;
+  GLenum   attachment;
+  GLuint   blurFramebuffer;
+  GLuint   blurTexture;
+
+  DilationShader();
+  ~DilationShader();
+
+  bool setup(glm::ivec2 windowSize);
+  void bind(GLuint t);
+  void render();
+};
+
+class BoxBlurShader: public Shader {
+private:
+  bool generateBuffers(glm::ivec2 windowSize);
+
+public:
+  GLuint textureSampler;
+
+  Polygon2 quad;
+  GLuint   framebuffers[2];
+  GLuint   textures[2];
+
+  BoxBlurShader();
+  ~BoxBlurShader();
+
+  bool setup(glm::ivec2 windowSize);
+  void bind(GLuint t);
+  void render(GLuint sourceTexture, GLuint targetFramebuffer, GLenum attachment, int iterations);
+};
+
 class ScreenShader: public Shader {
 private:
   bool generateBuffers(glm::ivec2 windowSize, bool multisamplingEnabled, int multisamplingSampleCount);
 
 public:
+  bool multisamplingEnabled;
+
   GLuint screenTextureSampler;
 
   Polygon2 screenQuad;
   GLuint   framebuffer;
   GLuint   texture;
   GLuint   renderbuffer;
+  GLuint   depthbuffer;
   GLuint   intermediateFramebuffer;
   GLuint   intermediateTexture;
+
+  GLuint depthOfFieldEnabledId;
+  GLuint outOfFocusTextureSampler;
+  GLuint positionTextureSampler;
+  GLuint minMaxFocusId;
+  GLuint nearFarId;
 
   ScreenShader();
   ~ScreenShader();
 
   bool setup(glm::ivec2 windowSize, bool multisamplingEnabled, int multisamplingSampleCount);
   void bind(GLuint t);
-  void render(const sf::RenderWindow* renderWindow, bool multisamplingEnabled);
+  void render(const sf::RenderWindow* renderWindow,
+              GLuint                  outOfFocusTexture,
+              glm::vec2               depthOfFieldGradualBlurRange,
+              float                   focusDistance,
+              bool                    depthOfFieldEnabled,
+              float                   near,
+              float                   far);
   void render(GLuint t, int x, int y, int xOffset, int yOffset);
   void draw();
 };
